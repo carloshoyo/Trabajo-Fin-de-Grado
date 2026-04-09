@@ -7,13 +7,15 @@ import { Image } from 'expo-image';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { useLogin } from '@/context/LoginContext';
 
 export default function LoginScreen() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
-    const [email, setEmail] = useState('')
-    const [passwd, setPasswd] = useState('')
-    const handleContinuar = () => {
+    const [email, setEmail] = useState('');
+    const [passwd, setPasswd] = useState('');
+    const {updateData, loginData} = useLogin();
+    const handleContinuar = async () => {
         console.log('Email capturado', email)
         console.log('Password capturada', passwd)
 
@@ -21,7 +23,36 @@ export default function LoginScreen() {
             console.log('Faltan datos!')
             return
         }
-        router.push('./home')
+        updateData({ userName: email, password: passwd });
+        if(await enviarDatos()) {
+            router.push('./home');
+        }
+    }
+    const enviarDatos = async () => {
+        try {
+            const respuesta = await fetch('http://192.168.1.72:3000/api/login', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userName: email,
+                    password: passwd
+                }),
+            });
+            const resultado = await respuesta.json();
+            if(resultado.success === true) {
+                return true;
+            } else {
+                console.log('Respuesta: ', resultado);
+                return false;
+            }
+            return true;
+        } catch(error) {
+            console.error('Error:', error);
+            return false;
+        }
     }
   return (
     <View style={[styles.main, {

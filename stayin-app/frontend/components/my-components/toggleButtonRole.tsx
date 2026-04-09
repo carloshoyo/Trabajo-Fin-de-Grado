@@ -1,52 +1,31 @@
 import { Colors } from "@/constants/theme";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
 
-export function ToggleButtonRole({text1, text2}: {text1: string, text2: string}) {
+export function ToggleButtonRole({text1, text2, value, onRoleSelected}: {text1: string, text2: string, value: string, onRoleSelected: (role: string) => void}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
-    const [selectedRole, setSelectedRole] = useState<string | null>(null);
     const router = useRouter();
-    const handleContinuar = () => {
-        if(selectedRole === null) {
-            Alert.alert('Atención.', 'Por favor selecciona un rol para continuar.');
-            return;
-        }
-
-        console.log('Rol elegido', selectedRole);
-        router.push('./')
-    }
     return (
-        <View style={[styles.main, {
+        <View style={[styles.box, {
+            backgroundColor: currentColors.formButtonColor,
         }]}>
-            <View style={[styles.box, {
-                backgroundColor: currentColors.formButtonColor,
-            }]}>
-                <TouchableOpacity style={[styles.button, {
-                    backgroundColor: selectedRole === 'inquilino'
-                    ? currentColors.formBorderColor
-                    : currentColors.formTextArea
-                }]}
-                onPress={() => setSelectedRole('inquilino')}>
-                    <Text>Inquilino</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, {
-                    backgroundColor: selectedRole === 'casero'
-                    ? currentColors.formBorderColor
-                    : currentColors.formTextArea
-                }]}
-                onPress={() => setSelectedRole('casero')}>
-                    <Text>Casero</Text>
-                </TouchableOpacity>
-            </View>
-            <TouchableOpacity>
-                <Text style={[{
-                    backgroundColor: currentColors.formButtonColor
-                }]}
-                onPress={handleContinuar}>
-                    Continuar
-                </Text>
+            <TouchableOpacity style={[styles.button, {
+                backgroundColor: value === 'inquilino'
+                ? currentColors.formBorderColor
+                : currentColors.formTextArea,
+                
+            }]}
+            onPress={() => onRoleSelected('inquilino')}>
+                <Text style={{color: currentColors.formTextColor}} >{text1}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, {
+                backgroundColor: value === 'casero'
+                ? currentColors.formBorderColor
+                : currentColors.formTextArea
+            }]}
+            onPress={() => onRoleSelected('casero')}>
+                <Text style={{color: currentColors.formTextColor}}>{text2}</Text>
             </TouchableOpacity>
         </View>
         

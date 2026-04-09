@@ -6,6 +6,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View, useColorScheme } from 'react-native';
+import { useRegistration } from '@/context/RegistrationContext';
 
 export default function LoginScreen() {
     const theme = useColorScheme() ?? 'light';
@@ -13,6 +14,7 @@ export default function LoginScreen() {
     const router = useRouter();
     const [passwd1, setPasswd1] = useState('');
     const [passwd2, setPasswd2] = useState('');
+    const { updateData } = useRegistration();
     const handleContinuar = () => {
         console.log('Password capturada', passwd1);
         console.log('Password capturada', passwd2);
@@ -21,6 +23,7 @@ export default function LoginScreen() {
             console.log('Faltan datos o no son iguales!')
             return;
         }
+        updateData({ password: passwd1 });
         router.push('./selectRole')
     }
   return (
@@ -28,7 +31,7 @@ export default function LoginScreen() {
             backgroundColor: currentColors.background}]}>
         <Image
             style={styles.logo}
-            source={currentColors.imgSource}
+            source={currentColors.imgSource2}
         />
         <CustomForm title='Continuar' onPress={handleContinuar}>
             <FirstTextInput
@@ -60,7 +63,8 @@ const styles = StyleSheet.create({
         padding: 20
     },
     logo: {
-        height: 300,
-        width: 300
+        height: 94,
+        width: 200,
+        marginTop: 0
     }
 })

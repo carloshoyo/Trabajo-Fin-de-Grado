@@ -20,7 +20,8 @@ export const Colors = {
     formBorderColor: '#999999',
     formButtonColor: '#4D4D4D',
     formTextColor: '#333333',
-    imgSource: require('../assets/images/LogoFondoBlanco.png')
+    imgSource: require('../assets/images/LogoFondoBlanco.png'),
+    imgSource2: require('../assets/images/LogoFondoBlancoPequeño.png')
   },
   dark: {
     text: '#000',
@@ -33,7 +34,8 @@ export const Colors = {
     formBorderColor: '#4d4d4d',
     formButtonColor: '#999999',
     formTextColor: '#E6E6E6',
-    imgSource: require('../assets/images/LogoFondoNegro.png')
+    imgSource: require('../assets/images/LogoFondoNegro.png'),
+    imgSource2: require('../assets/images/LogoFondoNegroPequeño.png')
   },
 };
 

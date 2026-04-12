@@ -25,7 +25,7 @@ export default function LoginScreen() {
         }
         updateData({ userName: email, password: passwd });
         if(await enviarDatos()) {
-            router.push('./home');
+            router.push('./homeInquilino');
         }
     }
     const enviarDatos = async () => {

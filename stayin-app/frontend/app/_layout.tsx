@@ -22,6 +22,10 @@ export default function RootLayout() {
           options={{ headerShown: false }} 
         />
         <Stack.Screen 
+          name="homeInquilino" 
+          options={{ headerShown: false }} 
+        />
+        <Stack.Screen 
           name="createAccountUserName" 
           options={{
               headerShown: true,

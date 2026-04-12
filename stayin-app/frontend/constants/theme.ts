@@ -20,6 +20,9 @@ export const Colors = {
     formBorderColor: '#999999',
     formButtonColor: '#4D4D4D',
     formTextColor: '#333333',
+    flatCardBackground: '#D9D9D9',
+    flatCardBorderColor: '#999999',
+    navBorderColor: '#E6E6E6',
     imgSource: require('../assets/images/LogoFondoBlanco.png'),
     imgSource2: require('../assets/images/LogoFondoBlancoPequeño.png')
   },
@@ -34,6 +37,9 @@ export const Colors = {
     formBorderColor: '#4d4d4d',
     formButtonColor: '#999999',
     formTextColor: '#E6E6E6',
+    flatCardBackground: '#3C3C3C',
+    flatCardBorderColor: '#6e6e6e',
+    navBorderColor: '#1f1f1f',
     imgSource: require('../assets/images/LogoFondoNegro.png'),
     imgSource2: require('../assets/images/LogoFondoNegroPequeño.png')
   },

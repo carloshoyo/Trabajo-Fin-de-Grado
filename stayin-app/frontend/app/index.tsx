@@ -8,12 +8,14 @@ import { Link, router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
 import { useLogin } from '@/context/LoginContext';
+import { API_CONFIG } from '@/constants/config';
 
 export default function LoginScreen() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const [email, setEmail] = useState('');
     const [passwd, setPasswd] = useState('');
+    const [rol, setRole] = useState('');
     const {updateData, loginData} = useLogin();
     const handleContinuar = async () => {
         console.log('Email capturado', email)
@@ -24,13 +26,22 @@ export default function LoginScreen() {
             return
         }
         updateData({ userName: email, password: passwd });
-        if(await enviarDatos()) {
-            router.push('./homeInquilino');
+        const rolDevuelto = await enviarDatos();
+        console.log("Rol devuelto: ", rolDevuelto);
+        if(rolDevuelto != undefined) {
+            if(rolDevuelto==='Inquilino') {
+                router.push('./homeInquilino');
+            } else if(rolDevuelto === 'Casero'){
+                router.push('./homeCasero');
+            } else {
+                console.log('Rol no definido en el sistema.');
+            }
         }
     }
     const enviarDatos = async () => {
         try {
-            const respuesta = await fetch('http://192.168.1.72:3000/api/login', {
+            console.log("MI IP ACTUAL ES: ", API_CONFIG.baseUrl);
+            const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.login}`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -43,12 +54,14 @@ export default function LoginScreen() {
             });
             const resultado = await respuesta.json();
             if(resultado.success === true) {
-                return true;
+                setRole(resultado.userData.rol);
+                console.log('El rol del resultado es: ')
+                console.log(resultado.userData.rol);
+                return resultado.userData.rol;
             } else {
                 console.log('Respuesta: ', resultado);
                 return false;
             }
-            return true;
         } catch(error) {
             console.error('Error:', error);
             return false;

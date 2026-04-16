@@ -24,7 +24,7 @@ app.post('/api/register', async (req, res) => {
 
     if(userData.rol === 'inquilino') {
         userData.rol = 'Inquilino';
-    } else if(userData.rol === ' casero') {
+    } else if(userData.rol === 'casero') {
         userData.rol = 'Casero';
     } else if(userData.rol === 'administrador') {
         userData.rol = 'Administrador';
@@ -136,6 +136,51 @@ app.post('/api/login', async(req, res) => {
         client.release();
     }
 });
+
+app.post('/api/home/casero', async(req, res) => {
+    const casero = req.body;
+
+    const client = await pool.connect();
+
+    try {
+        const userResult = await client.query(`SELECT id_usuario FROM Usuarios WHERE username=$1`, [casero.userName]);
+
+        if(userResult.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+        }
+
+        const id_casero = userResult.rows[0].id_usuario;
+
+        const resultado = await client.query(`SELECT DISTINCT a.*, v.area
+                                            FROM Viviendas v
+                                            JOIN Anuncios a ON v.id_vivienda = a.id_vivienda
+                                            WHERE a.id_casero = $1;`, [id_casero]);
+        if(resultado.rows.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'El usuario no tiene anuncios publicados',
+                adData: []
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'El usuario tiene anuncios publicados',
+            adData: resultado.rows
+        });
+        
+        
+
+    } catch(error) {
+        console.error('Error al cargar anuncios del casero:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener los datos del casero'
+        });
+    } finally {
+        client.release();
+    }
+})
 
 // Arranque del servidor
 app.listen(PORT, () => {

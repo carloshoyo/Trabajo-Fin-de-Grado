@@ -26,6 +26,17 @@ export default function RootLayout() {
           options={{ headerShown: false }} 
         />
         <Stack.Screen 
+          name="(crear-anuncio)" 
+          options={{ 
+            headerShown: false,
+            presentation: 'modal'
+          }} 
+        />
+        <Stack.Screen 
+          name="homeCasero" 
+          options={{ headerShown: false }} 
+        />
+        <Stack.Screen 
           name="createAccountUserName" 
           options={{
               headerShown: true,

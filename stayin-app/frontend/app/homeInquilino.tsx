@@ -30,7 +30,9 @@ export default function HomeInquilino() {
                     direccion="Gran Vía de Colón, 13, Granada"
                     precio={350}
                 />
-                <Text style={[styles.title]}>
+                <Text style={[styles.title, {
+                    color: currentColors.formTextColor
+                }]}>
                     Posibles futuros compañeros
                 </Text>
                 <ScrollView

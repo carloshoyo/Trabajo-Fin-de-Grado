@@ -5,6 +5,7 @@ import { useRegistration } from '@/context/RegistrationContext';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { CustomForm } from '@/components/my-components/customForm';
+import { API_CONFIG } from '@/constants/config';
 
 export default function SelectRole() {
     const theme = useColorScheme() ?? 'light';
@@ -26,13 +27,13 @@ export default function SelectRole() {
             if(selectedRole === 'Inquilino')     {
                 router.push('./selectDataInquilino');
             }
-            router.push('./home')
+            router.push('./homeCasero')
         }
     }
 
     const enviarDatos = async () => {
         try {
-            const respuesta = await fetch('http://192.168.1.72:3000/api/register', {
+            const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.register}`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',

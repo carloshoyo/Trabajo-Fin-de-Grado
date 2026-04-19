@@ -4,5 +4,6 @@ export const API_CONFIG = {
         login: '/api/login',
         homeCasero: '/api/home/casero',
         register: '/api/register',
+        postAd: '/api/postad',
     }
 };

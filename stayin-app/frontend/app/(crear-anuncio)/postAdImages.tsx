@@ -7,16 +7,56 @@ import EvilIcons from '@expo/vector-icons/EvilIcons';
 import { router } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { InsertRoomImages } from '@/components/my-components/insertRoomImages';
+import { useAd } from "@/context/PostAdContext";
+import { API_CONFIG } from '@/constants/config';
 
 export default function PostAd() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const [media, setMedia] = useState<string[]>([]);
+    const { updateData, adData } = useAd();
     const handleAtras = () => {
         router.back();
-    }
-    const handleContinuar = () => {
+    };
+    const handleContinuar = async () => {
+        if(adData.multimedia && adData.multimedia['salon'] != undefined && adData.multimedia['cocina'] != undefined && adData.multimedia['dormitorio'] != undefined && adData.multimedia['bano'] != undefined) {
+            if(await enviarDatos()) {
+                router.dismissTo('/homeCasero'); 
+            }
+        }
+    };
 
+    const enviarDatos = async () => {
+        try {
+            const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.postAd}`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: adData.title,
+                    direccion: adData.direccion,
+                    numero: adData.numero,
+                    puerta: adData.puerta,
+                    cp: adData.cp,
+                    descripcion: adData.descripcion,
+                    portada: adData.portada,
+                    precio: adData.precio,
+                    multimedia: adData.multimedia,
+                    userName: adData.userName,
+                    area: adData.area,
+                    max_inquilinos: adData.max_inquilinos
+                }),
+            });
+            const resultado = await respuesta.json();
+            // console.log('CÓDIGO HTML RECIBIDO: ', resultado);
+            // console.log('Respuesta: ', resultado);
+            return true;
+        } catch (error) {
+            console.error('Error: ', error);
+            return false;
+        }
     }
     const seleccionarMultimedia = async () => {
         let resultado = await ImagePicker.launchImageLibraryAsync({
@@ -54,11 +94,11 @@ export default function PostAd() {
                 >
                     <EvilIcons name="close-o" size={42} color={currentColors.postAdClose} />
                 </Pressable>
-                <InsertRoomImages title="Salón"/>
-                <InsertRoomImages title="Cocina"/>
-                <InsertRoomImages title="Dormitorio"/>
-                <InsertRoomImages title="Baño"/>
-                <InsertRoomImages title=""/>
+                <InsertRoomImages title="Salón" room="salon"/>
+                <InsertRoomImages title="Cocina" room="cocina"/>
+                <InsertRoomImages title="Dormitorio" room="dormitorio"/>
+                <InsertRoomImages title="Baño" room="bano"/>
+                <InsertRoomImages title="" room=""/>
                 <View style={[styles.arrows]}>
                     <Pressable
                         onPress={handleAtras}
@@ -145,5 +185,8 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         borderRadius: 100,
         marginTop: 'auto'
+    },
+    pressables: {
+        width: '100%'
     }
 })

@@ -1,16 +1,49 @@
 import { Colors } from "@/constants/theme";
 import { Pressable, View, Text, StyleSheet, useColorScheme } from "react-native";
 import AntDesign from '@expo/vector-icons/AntDesign';
+import * as ImagePicker from 'expo-image-picker';
+import { useState } from "react";
+import { useAd } from "@/context/PostAdContext";
 
-export function InsertRoomImages({title}: {title: string}) {
+export function InsertRoomImages({title, room}: {title: string, room: string}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
+    const [media, setMedia] = useState<string[]>([]);
+    const { updateData, adData } = useAd();
+    const seleccionarMultimedia = async () => {
+        let resultado = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images', 'videos', 'livePhotos'],
+            allowsMultipleSelection: true,
+            quality: 0.7
+        })
+
+        if (!resultado.canceled) {
+            // Guardamos las rutas de los archivos seleccionados
+            const nuevasUris = resultado.assets.map(asset => asset.uri);
+
+            const multimediaActual = adData.multimedia || {
+                salon: [],
+                cocina: [],
+                dormitorio: [],
+                bano: [],
+                extras: []
+            };
+
+            const fotosExistentes = multimediaActual[room as keyof typeof multimediaActual] || [];
+            updateData({
+                multimedia: {
+                    ...multimediaActual,
+                    [room]: [...fotosExistentes, ...nuevasUris]
+                }                
+            });
+        }
+    };
     return (
         <View style={[title==="" ? styles.mainNoTitle : styles.mainTitle, {
             borderColor: currentColors.postAdContinueColor,
             backgroundColor: currentColors.postAdInputTextColor
         }]}>
-            <Pressable style={[styles.pressableArea]}>
+            <Pressable style={[styles.pressableArea]} onPress={seleccionarMultimedia}>
                 <Text style={[styles.title, {
                     color: currentColors.postAdContinueColor
                 }]}>

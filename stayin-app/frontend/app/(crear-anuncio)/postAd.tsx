@@ -4,15 +4,59 @@ import Entypo from '@expo/vector-icons/Entypo';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from "react";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { useAd } from "@/context/PostAdContext";
+import { useLogin } from "@/context/LoginContext";
 
 export default function PostAd() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
+    const { loginData } = useLogin()
     const [media, setMedia] = useState<string[]>([]);
+    const [title, setTitle] = useState('');
+    const [direccion, setDireccion] = useState('');
+    const [descripcion, setDescripcion] = useState('');
+    const [numero, setNumero] = useState('');
+    const [puerta, setPuerta] = useState('');
+    const [cp, setCp] = useState('');
+    const [precio, setPrecio] = useState('');
+    const [area, setArea] = useState('');
+    const [inquilinos, setInquilinos] = useState('');
+    const {updateData} = useAd();
     const handleContinuar = () => {
-        router.push('/postAdImages');
+        if(title != '' && direccion != '' && descripcion != '' && cp != '' && numero != '') {
+            if(puerta === '') {
+                updateData({
+                    title: title, 
+                    direccion: direccion, 
+                    descripcion: descripcion, 
+                    cp: cp, 
+                    numero: numero, 
+                    userName: loginData.userName, 
+                    portada: media[0], 
+                    precio: Number(precio), 
+                    area: Number(area), 
+                    max_inquilinos: Number(inquilinos)
+                });
+            } else {
+                updateData({
+                    title: title, 
+                    direccion: direccion, 
+                    descripcion: descripcion,
+                    cp: cp, numero: numero, 
+                    puerta: puerta, 
+                    userName: loginData.userName, 
+                    portada: media[0], 
+                    precio: Number(precio), 
+                    area: Number(area), 
+                    max_inquilinos: Number(inquilinos)
+                });
+            }
+            router.push('/postAdImages');
+        } else {
+            console.log('Faltan datos del anuncio por introducir!!!');
+        }
     }
     const seleccionarMultimedia = async () => {
         let resultado = await ImagePicker.launchImageLibraryAsync({
@@ -29,7 +73,7 @@ export default function PostAd() {
     };
     const handleClose = () => {
         router.back();
-    }
+    };
     return (
         <View style={[styles.main, {
             backgroundColor: currentColors.background
@@ -57,6 +101,8 @@ export default function PostAd() {
                         borderColor: currentColors.postAdBorderColor
                     }]}
                     placeholderTextColor={currentColors.postAdInputTextColor}
+                    value={title}
+                    onChangeText={setTitle}
                 >
                 </TextInput>
                 <TextInput
@@ -66,6 +112,8 @@ export default function PostAd() {
                         borderColor: currentColors.postAdBorderColor
                     }]}
                     placeholderTextColor={currentColors.postAdInputTextColor}
+                    value={direccion}
+                    onChangeText={setDireccion}
                 >
                 </TextInput>
                 <View style={[styles.infoContainer]}>
@@ -77,6 +125,8 @@ export default function PostAd() {
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
+                        value={numero}
+                        onChangeText={setNumero}
                     >
                     </TextInput>
                         <TextInput
@@ -87,6 +137,8 @@ export default function PostAd() {
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
+                        value={puerta}
+                        onChangeText={setPuerta}
                     >
                     </TextInput>
                         <TextInput
@@ -97,9 +149,49 @@ export default function PostAd() {
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
+                        value={cp}
+                        onChangeText={setCp}
                     >
                     </TextInput>
                 </View>
+                <View style={[styles.infoContainer]}>
+                    <TextInput
+                        placeholder="Area"
+                        style={[styles.inputCP, {
+                            backgroundColor: currentColors.postAdInput,
+                            borderColor: currentColors.postAdBorderColor
+                        }]}
+                        placeholderTextColor={currentColors.postAdInputTextColor}
+                        keyboardType="numeric"
+                        value={area}
+                        onChangeText={setArea}
+                    >
+                    </TextInput>
+                        <TextInput
+                        placeholder="Número de inquilinos"
+                        style={[styles.inputCP, {
+                            backgroundColor: currentColors.postAdInput,
+                            borderColor: currentColors.postAdBorderColor
+                        }]}
+                        placeholderTextColor={currentColors.postAdInputTextColor}
+                        keyboardType="numeric"
+                        value={inquilinos}
+                        onChangeText={setInquilinos}
+                    >
+                    </TextInput>
+                    <TextInput
+                        placeholder="Precio"
+                        style={[styles.inputCP, {
+                            backgroundColor: currentColors.postAdInput,
+                            borderColor: currentColors.postAdBorderColor
+                        }]}
+                        placeholderTextColor={currentColors.postAdInputTextColor}
+                        keyboardType="numeric"
+                        value={precio}
+                        onChangeText={setPrecio}
+                    >
+                    </TextInput>
+                </View>                
                 <TextInput
                     placeholder="Descripción"
                     style={[styles.input, styles.textArea, {
@@ -111,6 +203,8 @@ export default function PostAd() {
                     scrollEnabled={true}
                     numberOfLines={15}
                     textAlignVertical="top"
+                    value={descripcion}
+                    onChangeText={setDescripcion}
                 >
                 </TextInput>
                 <Pressable

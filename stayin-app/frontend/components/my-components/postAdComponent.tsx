@@ -6,7 +6,7 @@ export function PostAdComponent() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const handlePress = () => {
-        router.push('/postAd')
+        router.push('/postAd');
     }
     return (
         <Pressable style={[styles.pressable]}

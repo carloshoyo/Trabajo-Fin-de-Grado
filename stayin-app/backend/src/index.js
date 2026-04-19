@@ -180,6 +180,52 @@ app.post('/api/home/casero', async(req, res) => {
     } finally {
         client.release();
     }
+});
+
+app.post('/api/postad', async(req, res) => {
+    console.log("¡PETICIÓN RECIBIDA EN POSTAD!"); // Añade esta línea
+    console.log("Datos:", req.body);
+
+    const adData = req.body;
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN;');
+
+        const userResult = await client.query(`SELECT id_usuario FROM Usuarios WHERE username=$1`, [adData.userName]);
+        const id_casero = userResult.rows[0].id_usuario;
+
+        const viviendaResult = await client.query(`INSERT INTO Viviendas(id_casero, area, direccion,  max_inquilinos, 
+                            descripcion, numero, puerta, cpostal) VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+                            RETURNING id_vivienda;`, [
+                                id_casero,adData.area, adData.direccion, adData.max_inquilinos,
+                                adData.descripcion, adData.numero, adData.puerta, adData.cp
+                            ]);
+
+        const id_vivienda = viviendaResult.rows[0].id_vivienda;
+
+        await client.query(`INSERT INTO Anuncios(id_vivienda, id_casero, titulo, img, direccion,
+                            precio, multimedia) VALUES($1, $2, $3, $4, $5, $6, $7)`, [
+                                id_vivienda, id_casero, adData.title, adData.portada, adData.direccion,
+                                adData.precio, adData.multimedia
+                            ]);
+
+        await client.query(`COMMIT`);
+        res.status(200).json({
+            success: true,
+            message: 'Anuncio creado correctamente'
+        })
+    } catch(error) {
+        await client.query('ROLLBACK');
+        console.error('Error durante la inserción del anuncio:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al crear el anuncio'
+        });
+    } finally {
+        client.release();
+    }
 })
 
 // Arranque del servidor

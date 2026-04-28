@@ -9,6 +9,7 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { InsertRoomImages } from '@/components/my-components/insertRoomImages';
 import { useAd } from "@/context/PostAdContext";
 import { API_CONFIG } from '@/constants/config';
+import * as SecureStore from 'expo-secure-store';
 
 export default function PostAd() {
     const theme = useColorScheme() ?? 'light';
@@ -28,11 +29,13 @@ export default function PostAd() {
 
     const enviarDatos = async () => {
         try {
+            const token = await SecureStore.getItemAsync('userToken');
             const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.postAd}`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     title: adData.title,

@@ -1,13 +1,36 @@
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
-import pool from './db.js'; // ¡OJO! En el sistema moderno el .js es obligatorio aquí
+import pool from './db.js';
+import jwt from 'jsonwebtoken';
+import 'dotenv/config';
+
+const secret_key = process.env.SECRET_KEY
 
 const app = express();
 const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
+
+const verificarToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ success: false, message: 'Acceso denegado. No hay token.' });
+    }
+
+    jwt.verify(token, secret_key, (error, decodedUser) => {
+        if (error) {
+            return res.status(403).json({ success: false, message: 'Token inválido o caducado.' });
+        }
+
+        req.user = decodedUser;
+
+        next();
+    });
+};
 
 app.get('/', (req, res) => {
     res.send('El servidor de StayIn está funcionando.');
@@ -111,12 +134,14 @@ app.post('/api/login', async(req, res) => {
         const usuario = resultado.rows[0];
 
         if(await bcrypt.compare(loginData.password, usuario.passwd)) {
+            const token = jwt.sign({id_usuario: usuario.id_usuario, rol: usuario.rol}, secret_key, {expiresIn: '7d'});
             res.status(200).json({
                 success: true,
                 message: 'Inicio de sesión exitoso',
                 userData: {
                     id_usuario: usuario.id_usuario,
-                    rol: usuario.rol
+                    rol: usuario.rol,
+                    token: token
                 }
             });
         } else {
@@ -137,21 +162,16 @@ app.post('/api/login', async(req, res) => {
     }
 });
 
-app.post('/api/home/casero', async(req, res) => {
+app.post('/api/home/casero', verificarToken, async(req, res) => {
     const casero = req.body;
 
     const client = await pool.connect();
 
     try {
-        const userResult = await client.query(`SELECT id_usuario FROM Usuarios WHERE username=$1`, [casero.userName]);
 
-        if(userResult.rows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-        }
+        const id_casero = req.user.id_usuario; //Viene del token del user
 
-        const id_casero = userResult.rows[0].id_usuario;
-
-        const resultado = await client.query(`SELECT DISTINCT a.*, v.area
+        const resultado = await client.query(`SELECT DISTINCT a.*, v.*
                                             FROM Viviendas v
                                             JOIN Anuncios a ON v.id_vivienda = a.id_vivienda
                                             WHERE a.id_casero = $1;`, [id_casero]);
@@ -182,7 +202,7 @@ app.post('/api/home/casero', async(req, res) => {
     }
 });
 
-app.post('/api/postad', async(req, res) => {
+app.post('/api/postad', verificarToken, async(req, res) => {
     console.log("¡PETICIÓN RECIBIDA EN POSTAD!"); // Añade esta línea
     console.log("Datos:", req.body);
 
@@ -206,8 +226,8 @@ app.post('/api/postad', async(req, res) => {
         const id_vivienda = viviendaResult.rows[0].id_vivienda;
 
         await client.query(`INSERT INTO Anuncios(id_vivienda, id_casero, titulo, img, direccion,
-                            precio, multimedia) VALUES($1, $2, $3, $4, $5, $6, $7)`, [
-                                id_vivienda, id_casero, adData.title, adData.portada, adData.direccion,
+                            precio, multimedia) VALUES($1, $2, $3, $4, $5, $6)`, [
+                                id_vivienda, id_casero, adData.title, adData.portada,
                                 adData.precio, adData.multimedia
                             ]);
 
@@ -226,7 +246,51 @@ app.post('/api/postad', async(req, res) => {
     } finally {
         client.release();
     }
-})
+});
+
+app.post('/api/editad', verificarToken, async(req, res) => {
+    const adData = req.body;
+
+    if(!adData.id_anuncio) {
+        return res.status(400).json({ success: false, message: 'Falta el ID del anuncio' });
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN;');
+
+        const updateAnuncio = await client.query(`
+            UPDATE Anuncios SET titulo = $1, precio = $2
+            WHERE id_anuncio= $3 RETURNING id_vivienda;
+            `, [adData.title, adData.precio, adData.id_anuncio]);
+
+        const id_vivienda = updateAnuncio.rows[0].id_vivienda;
+
+        await client.query(`
+            UPDATE Viviendas SET area = $1, direccion = $2, max_inquilinos = $3,
+            descripcion = $4 WHERE id_vivienda = $5
+            `, [adData.area, adData.direccion, adData.max_inquilinos, adData.descripcion, id_vivienda
+            ]);
+        
+            await client.query('COMMIT;');
+
+            res.status(200).json({
+                success: true,
+                message: 'Anuncio editado correctamente'
+            });
+
+    } catch(error) {
+        console.log('Error al editar el anuncio');
+        console.error('Error: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor al actualizar'
+        });
+    } finally {
+        client.release();
+    }
+});
 
 // Arranque del servidor
 app.listen(PORT, () => {

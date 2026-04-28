@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, useColorScheme, ImageSourcePropType, ScrollView } from 'react-native';
+import { Text, View, StyleSheet, useColorScheme, ImageSourcePropType, ScrollView, Pressable } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { AdvertCard } from '@/components/my-components/advertCard'; 
 import { PostAdComponent } from '@/components/my-components/postAdComponent';
@@ -7,26 +7,33 @@ import { useFocusEffect } from 'expo-router';
 import { FlatCard } from '@/components/my-components/flatCard';
 import { useLogin } from '@/context/LoginContext';
 import { API_CONFIG } from '@/constants/config';
+import * as SecureStore from 'expo-secure-store';
 
 interface Anuncio {
     titulo: string;
     img: string;
     direccion: string;
     precio: number;
+    descripcion: string;
+    area: number;
+    max_inquilinos: number;
+    id_anuncio: number;
 }
 
 export default function HomeCasero({userName}: {userName: string}) {
-    const { loginData } = useLogin();
+    const { loginData, logout } = useLogin();
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
     const getAnuncios = async () => {
         try {
+            const token = await SecureStore.getItemAsync('userToken');
             const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.homeCasero}`, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     userName: loginData.userName
@@ -35,6 +42,15 @@ export default function HomeCasero({userName}: {userName: string}) {
             const resultado = await respuesta.json();
             if(resultado.success == true) {
                 setAnuncios(resultado.adData);
+            } else {
+                // Si el Portero rechaza (o hay cualquier otro error lógico)
+                console.warn("Petición rechazada por el servidor:", resultado.message);
+                
+                // Aquí puedes añadir lógica de negocio, por ejemplo:
+                // Si el mensaje es de token caducado, puedes forzar un logout automático
+                if (resultado.message === 'Token inválido o caducado.' || resultado.message === 'Acceso denegado. No hay token.') {
+                    logout(); // Expulsa al usuario por seguridad
+                }
             }
         } catch(error) {
             console.error('Error:', error);
@@ -67,9 +83,23 @@ export default function HomeCasero({userName}: {userName: string}) {
                         img={anuncio.img}
                         direccion={anuncio.direccion}
                         precio={anuncio.precio}
+                        descripcion={anuncio.descripcion}
+                        area={anuncio.area}
+                        max_inquilinos={anuncio.max_inquilinos}
+                        id_anuncio={anuncio.id_anuncio}
                     />
                 ))}
                 <PostAdComponent/>
+                <Pressable 
+                    style={[styles.logout, {
+                        backgroundColor: currentColors.postAdContainerColor
+                    }]}
+                    onPress={logout}
+                >
+                    <Text style={{color: currentColors.formTextColor}}>
+                        Log Out
+                    </Text>
+                </Pressable>
             </ScrollView>
             
         </View>
@@ -91,5 +121,11 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '400'
+    },
+    logout: {
+        width: '100%',
+        height: 100,
+        justifyContent: 'center',
+        alignItems: 'center'
     }
 })

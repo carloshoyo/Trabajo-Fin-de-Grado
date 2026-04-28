@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { RegistrationProvider } from '@/context/RegistrationContext';
 import { LoginProvider } from '@/context/LoginContext';
 import { PostAdProvider } from '@/context/PostAdContext';
+import { useEffect } from 'react';
 
 export default function RootLayout() {
   const theme = useColorScheme() ?? 'light';
@@ -44,6 +45,13 @@ export default function RootLayout() {
                   headerShown: true,
                   animation: 'slide_from_right'
               }} 
+            />
+            <Stack.Screen
+              name="AdView"
+              options={{
+                headerShown: false,
+                presentation: 'modal'
+              }}
             />
           </Stack>
         </PostAdProvider>

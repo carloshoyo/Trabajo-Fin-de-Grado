@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
 import { useLogin } from '@/context/LoginContext';
 import { API_CONFIG } from '@/constants/config';
+import * as SecureStore from 'expo-secure-store';
 
 export default function LoginScreen() {
     const theme = useColorScheme() ?? 'light';
@@ -30,9 +31,9 @@ export default function LoginScreen() {
         console.log("Rol devuelto: ", rolDevuelto);
         if(rolDevuelto != undefined) {
             if(rolDevuelto==='Inquilino') {
-                router.push('./homeInquilino');
+                router.replace('./homeInquilino');
             } else if(rolDevuelto === 'Casero'){
-                router.push('./homeCasero');
+                router.replace('./homeCasero');
             } else {
                 console.log('Rol no definido en el sistema.');
             }
@@ -55,6 +56,9 @@ export default function LoginScreen() {
             const resultado = await respuesta.json();
             if(resultado.success === true) {
                 setRole(resultado.userData.rol);
+                await SecureStore.setItemAsync('userToken', resultado.userData.token);
+                await SecureStore.setItemAsync('userRole', resultado.userData.rol);
+                await SecureStore.setItemAsync('userName', email);
                 console.log('El rol del resultado es: ')
                 console.log(resultado.userData.rol);
                 return resultado.userData.rol;

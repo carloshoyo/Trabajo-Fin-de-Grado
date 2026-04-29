@@ -292,6 +292,80 @@ app.post('/api/editad', verificarToken, async(req, res) => {
     }
 });
 
+app.post('/api/home/inquilino', verificarToken, async (req, res) => {
+    const adData =req.body;
+
+    const client = await pool.connect();
+
+    try {
+
+        const id_casero = req.user.id_usuario; //Viene del token del user
+
+        const resultado = await client.query(`SELECT DISTINCT a.*, v.*
+                                            FROM Viviendas v
+                                            JOIN Anuncios a ON v.id_vivienda = a.id_vivienda`);
+        if(resultado.rows.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'No hay anuncios publicados',
+                adData: []
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            message: 'Hay anuncios publicados',
+            adData: resultado.rows
+        });
+        
+        
+
+    } catch(error) {
+        console.error('Error al cargar anuncios:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener los datos'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.post('/api/solicitudes/crear', verificarToken, async (req, res) => {
+    const solicitud = req.body
+
+    const id_usuario = req.user.id_usuario;
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN;');
+
+        const solicitudCreada = await client.query(`
+            INSERT INTO Solicitudes(id_anuncio, id_inquilino) VALUES ($1, $2);
+            `, [solicitud.id_anuncio, id_usuario]);
+
+        await client.query('COMMIT;');
+
+        res.status(200).json({
+            success: true,
+            message: 'Solicitud creada correctamente'
+        });
+
+    } catch(error) {
+        if (error.code === '23505') {
+            return res.status(400).json({ success: false, message: 'Ya has enviado una solicitud para este anuncio' });
+        }
+        console.error('Error al crear la solicitud: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor al crear solicitud del inquilino'
+        });
+    } finally {
+        client.release();
+    }
+})
+
 // Arranque del servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);

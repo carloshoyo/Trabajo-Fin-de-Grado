@@ -19,7 +19,8 @@ export default function RootLayout() {
             },
             headerShadowVisible: false,
             headerTitle: ''
-            }}>
+            }}
+          >
             <Stack.Screen 
               name="index" 
               options={{ headerShown: false }} 
@@ -48,6 +49,13 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name="AdView"
+              options={{
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen
+              name="adViewInquilino"
               options={{
                 headerShown: false,
                 presentation: 'modal'

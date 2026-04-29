@@ -3,10 +3,65 @@ import { FlatCard } from "@/components/my-components/flatCard";
 import { Colors } from "@/constants/theme";
 import { NavBar } from "@/components/my-components/navBar";
 import { UserCard } from "@/components/my-components/userCard";
+import { useCallback, useState } from "react";
+import * as SecureStore from 'expo-secure-store';
+import { API_CONFIG } from "@/constants/config";
+import { useLogin } from "@/context/LoginContext";
+import { useFocusEffect } from "expo-router";
+
+interface Anuncio {
+    titulo: string;
+    img: string;
+    direccion: string;
+    precio: number;
+    descripcion: string;
+    area: number;
+    max_inquilinos: number;
+    id_anuncio: number;
+}
 
 export default function HomeInquilino() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
+    const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+    const { loginData, logout } = useLogin();
+    const getAnuncios = async () => {
+        try {
+                    const token = await SecureStore.getItemAsync('userToken');
+                    const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.homeInquilino}`, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            userName: loginData.userName
+                        }),
+                    });
+                    const resultado = await respuesta.json();
+                    if(resultado.success == true) {
+                        setAnuncios(resultado.adData);
+                    } else {
+                        // Si el Portero rechaza (o hay cualquier otro error lógico)
+                        console.warn("Petición rechazada por el servidor:", resultado.message);
+                        
+                        // Aquí puedes añadir lógica de negocio, por ejemplo:
+                        // Si el mensaje es de token caducado, puedes forzar un logout automático
+                        if (resultado.message === 'Token inválido o caducado.' || resultado.message === 'Acceso denegado. No hay token.') {
+                            logout(); // Expulsa al usuario por seguridad
+                        }
+                    }
+                } catch(error) {
+                    console.error('Error:', error);
+                    return false;
+                }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            getAnuncios();
+    }, []));
     return (
         <View style={[styles.container, {
             backgroundColor: currentColors.background
@@ -24,12 +79,19 @@ export default function HomeInquilino() {
                 }]}>
                     Viviendas que te podrían interesar
                 </Text>
-                <FlatCard 
-                    title="Piso en Gran Vía"
+                {anuncios.map((anuncio, index) => (
+                    <FlatCard 
+                    key={index}
+                    title={anuncio.titulo}
                     img={require('../assets/images/flat_img.png')}
-                    direccion="Gran Vía de Colón, 13, Granada"
-                    precio={350}
-                />
+                    direccion={anuncio.direccion}
+                    precio={anuncio.precio}
+                    descripcion={anuncio.descripcion}
+                    area={anuncio.area}
+                    max_inquilinos={anuncio.max_inquilinos}
+                    id_anuncio={anuncio.id_anuncio}
+                />                    
+                ))}
                 <Text style={[styles.title, {
                     color: currentColors.formTextColor
                 }]}>

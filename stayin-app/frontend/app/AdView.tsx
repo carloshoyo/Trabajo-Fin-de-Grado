@@ -8,7 +8,7 @@ import { useAd } from "@/context/PostAdContext";
 import { API_CONFIG } from "@/constants/config";
 import * as SecureStore from 'expo-secure-store';
 
-export default function() {
+export default function AdView() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const { title } = useLocalSearchParams<{title: string}>();

@@ -1,4 +1,4 @@
-import { Text, View, useColorScheme, StyleSheet, ScrollView } from "react-native";
+import { Text, View, useColorScheme, StyleSheet, ScrollView, Pressable } from "react-native";
 import { FlatCard } from "@/components/my-components/flatCard";
 import { Colors } from "@/constants/theme";
 import { NavBar } from "@/components/my-components/navBar";
@@ -106,8 +106,18 @@ export default function HomeInquilino() {
                     <UserCard name="Carlos Hoyo" descripcion="Granada"></UserCard>
                     <UserCard name="Carlos Hoyo" descripcion="Granada"></UserCard>
                 </ScrollView>
+                <Pressable 
+                    style={[styles.logout, {
+                        backgroundColor: currentColors.postAdContainerColor
+                    }]}
+                    onPress={logout}
+                >
+                    <Text style={{color: currentColors.formTextColor}}>
+                        Log Out
+                    </Text>
+                </Pressable>
             </ScrollView>
-            <NavBar active="home"></NavBar>
+            <NavBar active="home" solicitudes={16}></NavBar>
         </View>
     )
 }
@@ -140,5 +150,11 @@ const styles = StyleSheet.create({
     },
     carrusel: {
         gap: 15
+    },
+    logout: {
+        width: '100%',
+        height: 100,
+        justifyContent: 'center',
+        alignItems: 'center'
     }
 })

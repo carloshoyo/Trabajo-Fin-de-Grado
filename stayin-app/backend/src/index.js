@@ -364,6 +364,40 @@ app.post('/api/solicitudes/crear', verificarToken, async (req, res) => {
     } finally {
         client.release();
     }
+});
+
+app.post('/api/solicitudes/casero', verificarToken, async(req, res) => {
+    const userData = req.body;
+
+    const client = await pool.connect();
+
+    try {
+        const resultado = await client.query(`SELECT 
+                                            s.id_solicitud, 
+                                            s.f_solicitud,
+                                            u.nombre, 
+                                            u.apellidos, 
+                                            a.titulo AS titulo_anuncio
+                                            FROM Solicitudes s
+                                            JOIN Anuncios a ON s.id_anuncio = a.id_anuncio
+                                            JOIN Usuarios u ON s.id_inquilino = u.id_usuario
+                                            WHERE a.id_casero = $1 AND s.estado = 'Pendiente'
+                                            ORDER BY s.f_solicitud DESC;`, 
+                                            [id_casero]);
+        res.status(200).json({
+            success: true,
+            message: 'Se han enviado las solicitudes con éxito',
+            solicitudes: resultado.rows
+        });
+    } catch(error) {
+        console.error('Error al mostrar las solicitudes del usuario: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'No se han podido mostrar las solictudes del usuario'
+        });
+    } finally {
+        await client.release();
+    }
 })
 
 // Arranque del servidor

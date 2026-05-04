@@ -32,6 +32,9 @@ export const Colors = {
     postAdContinueColor: '#4D4D4D',
     adViewInputColor: '#E6E6E6',
     placeholderColor: '#999999',
+    declineRequest: '#8d0000',
+    acceptRequest: '#019b01',
+    notificationsColor: '#f00',
     imgSource: require('../assets/images/LogoFondoBlanco.png'),
     imgSource2: require('../assets/images/LogoFondoBlancoPequeño.png')
   },
@@ -58,6 +61,9 @@ export const Colors = {
     postAdContinueColor: '#6b6a6a',
     adViewInputColor: '#2b2a2a',
     placeholderColor: '#999999',
+    declineRequest: '#a90000',
+    acceptRequest: '#01b401',
+    notificationsColor: '#f00',
     imgSource: require('../assets/images/LogoFondoNegro.png'),
     imgSource2: require('../assets/images/LogoFondoNegroPequeño.png')
   },

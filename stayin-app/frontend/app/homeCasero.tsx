@@ -8,6 +8,7 @@ import { FlatCard } from '@/components/my-components/flatCard';
 import { useLogin } from '@/context/LoginContext';
 import { API_CONFIG } from '@/constants/config';
 import * as SecureStore from 'expo-secure-store';
+import { NavBar } from '@/components/my-components/navBar';
 
 interface Anuncio {
     titulo: string;
@@ -25,6 +26,7 @@ export default function HomeCasero({userName}: {userName: string}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+    const [solicitudes, setSolicitudes] = useState([]);
     const getAnuncios = async () => {
         try {
             const token = await SecureStore.getItemAsync('userToken');
@@ -55,6 +57,28 @@ export default function HomeCasero({userName}: {userName: string}) {
         } catch(error) {
             console.error('Error:', error);
             return false;
+        }
+    };
+
+    const getSolicitudes = async () => {
+        try {
+            const token = await SecureStore.getItemAsync('userToken');
+            const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.cargarSolicitudes}`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },            
+            });
+            const resultado = await respuesta.json();
+            if(resultado.sucess == true) {
+                setSolicitudes(resultado.solicitudes);
+            } else {
+                console.warn('El servidor ha rechazado la petición: ', resultado.message);
+            }
+        } catch(error) {
+            console.error('Error al cargar las solicitudes: ', error);
         }
     }
 
@@ -101,7 +125,7 @@ export default function HomeCasero({userName}: {userName: string}) {
                     </Text>
                 </Pressable>
             </ScrollView>
-            
+            <NavBar active='home' solicitudes={1}/>            
         </View>
         
         
@@ -116,7 +140,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 15,
         padding: 10,
-        marginTop: 60
+        marginTop: 60,
+        paddingBottom: 120
     },
     title: {
         fontSize: 24,

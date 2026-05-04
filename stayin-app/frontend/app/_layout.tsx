@@ -61,6 +61,13 @@ export default function RootLayout() {
                 presentation: 'modal'
               }}
             />
+            <Stack.Screen
+              name="screenSocial"
+              options={{
+                headerShown: false,
+                animation: 'slide_from_right'
+              }}
+            />
           </Stack>
         </PostAdProvider>
       </LoginProvider>

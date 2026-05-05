@@ -8,6 +8,7 @@ export const API_CONFIG = {
         editAd: '/api/editad',
         homeInquilino: '/api/home/inquilino',
         registrarSolicitud: '/api/solicitudes/crear',
-        cargarSolicitudes: 'api/solicitudes/casero',
+        cargarSolicitudes: '/api/solicitudes/casero',
+        procesarSolicitud: '/api/solicitudes/procesar',
     }
 };

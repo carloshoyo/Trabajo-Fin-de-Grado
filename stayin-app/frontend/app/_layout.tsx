@@ -38,7 +38,11 @@ export default function RootLayout() {
             />
             <Stack.Screen 
               name="homeCasero" 
-              options={{ headerShown: false }} 
+              options={{ 
+                headerShown: false,
+                animation: 'fade',
+                animationDuration: 200
+              }}
             />
             <Stack.Screen 
               name="createAccountUserName" 
@@ -65,7 +69,8 @@ export default function RootLayout() {
               name="screenSocial"
               options={{
                 headerShown: false,
-                animation: 'slide_from_right'
+                animation: 'fade',
+                animationDuration: 100
               }}
             />
           </Stack>

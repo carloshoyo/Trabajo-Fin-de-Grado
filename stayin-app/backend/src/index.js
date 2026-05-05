@@ -367,23 +367,28 @@ app.post('/api/solicitudes/crear', verificarToken, async (req, res) => {
 });
 
 app.post('/api/solicitudes/casero', verificarToken, async(req, res) => {
-    const userData = req.body;
+    const id_casero = req.user.id_usuario;
+
+    console.log('El id del casero es: ', id_casero);
 
     const client = await pool.connect();
 
     try {
-        const resultado = await client.query(`SELECT 
-                                            s.id_solicitud, 
-                                            s.f_solicitud,
-                                            u.nombre, 
-                                            u.apellidos, 
-                                            a.titulo AS titulo_anuncio
-                                            FROM Solicitudes s
-                                            JOIN Anuncios a ON s.id_anuncio = a.id_anuncio
-                                            JOIN Usuarios u ON s.id_inquilino = u.id_usuario
-                                            WHERE a.id_casero = $1 AND s.estado = 'Pendiente'
-                                            ORDER BY s.f_solicitud DESC;`, 
-                                            [id_casero]);
+        const resultado = await client.query(`
+            SELECT 
+                s.id_solicitud,
+                s.id_anuncio, 
+                s.f_solicitud,
+                u.username,
+                a.titulo AS titulo_anuncio
+                FROM Solicitudes s
+                JOIN Anuncios a ON s.id_anuncio = a.id_anuncio
+                JOIN Usuarios u ON s.id_inquilino = u.id_usuario
+                WHERE a.id_casero = $1 AND s.estado = 'Pendiente'
+                ORDER BY s.f_solicitud DESC;`, 
+                [id_casero]);
+
+        console.log('Las solicitudes son: ', resultado);
         res.status(200).json({
             success: true,
             message: 'Se han enviado las solicitudes con éxito',
@@ -393,10 +398,62 @@ app.post('/api/solicitudes/casero', verificarToken, async(req, res) => {
         console.error('Error al mostrar las solicitudes del usuario: ', error);
         res.status(500).json({
             success: false,
-            message: 'No se han podido mostrar las solictudes del usuario'
+            message: 'No se han podido mostrar las solicitudes del usuario'
         });
     } finally {
         await client.release();
+    }
+});
+
+app.post('/api/solicitudes/procesar', verificarToken, async (req, res) => {
+    const id_casero = req.user.id_usuario;
+    const accepts = req.body.accepts;
+    const userName = req.body.userName;
+    const id_anuncio = req.body.id_anuncio;
+
+    console.log('El id del anuncio es: ', id_anuncio);
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN;');
+
+        const respuesta = await client.query(`
+            SELECT 
+                i.id_inquilino FROM Inquilino i JOIN Usuarios u ON i.id_inquilino = u.id_usuario
+                WHERE u.username = $1`, [userName]);
+
+        const id_inquilino = respuesta.rows[0].id_inquilino;
+
+        const respuesta_id_vivienda = await client.query(`
+            SELECT id_vivienda FROM Anuncios WHERE id_anuncio = $1`, [id_anuncio]);
+
+        const id_vivienda = respuesta_id_vivienda.rows[0].id_vivienda;
+
+        if(accepts) {
+            await client.query(`INSERT INTO Estancias(id_inquilino, id_vivienda) VALUES ($1, $2)`,
+                [id_inquilino, id_vivienda]
+            );
+
+            await client.query(`UPDATE Solicitudes SET estado = 'Aceptada' WHERE id_inquilino = $1
+                AND id_anuncio = $2;`, [id_inquilino, id_anuncio]);
+        } else {
+            await client.query(`UPDATE Solicitudes SET estado = 'Rechazada' WHERE id_inquilino = $1
+                AND id_anuncio = $2;`, [id_inquilino, id_anuncio]);
+        }
+
+        await client.query('COMMIT;');
+
+        res.status(200).json({
+            success: true,
+            message: accepts ? 'La solicitud se ha aceptado correctamente' : 'La solicitud se ha rechazado correctamente'
+        });
+    } catch(error) {
+        console.error('Error al procesar la solicitud: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'No se ha podido completar la solicitud correctamente'
+        });
     }
 })
 

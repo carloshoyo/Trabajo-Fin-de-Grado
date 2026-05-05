@@ -6,7 +6,7 @@ import { FirstTextInput } from "@/components/my-components/firstTextInput";
 import { MiddleTextInput } from "@/components/my-components/middleTextInput";
 import { LastTextInput } from "@/components/my-components/lastTextInput";
 
-export function SelectStateInquilino() {
+export default function SelectStateInquilino() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const handleContinuar = () => {

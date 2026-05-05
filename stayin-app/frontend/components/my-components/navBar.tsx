@@ -20,9 +20,16 @@ export function NavBar({active, solicitudes}: {active: string, solicitudes: numb
                 borderColor: currentColors.navBorderColor,
                 backgroundColor: currentColors.background
             }]}>
-                <Ionicons name={active==='home' ? "home" : "home-outline"} size={24} color={currentColors.formButtonColor}/>
-                <MaterialIcons name="search" size={24} color={currentColors.formButtonColor}/>
-                <Ionicons name="chatbox-outline" size={24} color={currentColors.formButtonColor}/>
+                <Pressable style={[styles.pressables]} onPress={() => moveTo('/homeCasero')}>
+                    <Ionicons name={active==='home' ? "home" : "home-outline"} size={24} color={currentColors.formButtonColor}/>
+                </Pressable>
+                <Pressable style={[styles.pressables]}>
+                    <MaterialIcons name="search" size={24} color={currentColors.formButtonColor}/>
+                </Pressable>
+                <Pressable style={[styles.pressables]}>
+                    <Ionicons name="chatbox-outline" size={24} color={currentColors.formButtonColor}/>
+                </Pressable>
+                
                 <View style={[styles.notifications]}>
                     {solicitudes > 0 ? (
                     <View style={[styles.notificationsNumberView, {
@@ -37,11 +44,13 @@ export function NavBar({active, solicitudes}: {active: string, solicitudes: numb
                     ) : (
                         <></>
                     )}
-                    <Pressable onPress={() => moveTo('/screenSocial')}>
-                        <MaterialCommunityIcons name="cards-heart-outline" size={24} color={currentColors.formButtonColor}/>
+                    <Pressable style={[styles.pressables]} onPress={() => moveTo('/screenSocial')}>
+                        <MaterialCommunityIcons name={active === 'social' ? "cards-heart" : "cards-heart-outline"} size={24} color={currentColors.formButtonColor}/>
                     </Pressable>
                 </View>
-                <FontAwesome5 name="user-circle" size={24} color={currentColors.formButtonColor}/>
+                <Pressable style={[styles.pressables]}>
+                    <FontAwesome5 name="user-circle" size={24} color={currentColors.formButtonColor}/>
+                </Pressable>
             </View>
         </View>
     )
@@ -58,7 +67,7 @@ const styles = StyleSheet.create({
         width: '100%',
         justifyContent: 'space-between',
         padding: 15,
-        paddingBottom: 30,
+        paddingBottom: 25,
         borderTopWidth: .5
     },
     notifications: {
@@ -80,5 +89,8 @@ const styles = StyleSheet.create({
     notificationsNumber: {
         fontSize: 10,
         fontWeight: '500'
+    },
+    pressables: {
+        padding: 5
     }
 })

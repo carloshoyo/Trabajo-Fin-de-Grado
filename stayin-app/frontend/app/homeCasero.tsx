@@ -72,7 +72,7 @@ export default function HomeCasero({userName}: {userName: string}) {
                 },            
             });
             const resultado = await respuesta.json();
-            if(resultado.sucess == true) {
+            if(resultado.success == true) {
                 setSolicitudes(resultado.solicitudes);
             } else {
                 console.warn('El servidor ha rechazado la petición: ', resultado.message);
@@ -85,6 +85,7 @@ export default function HomeCasero({userName}: {userName: string}) {
     useFocusEffect(
         useCallback(() => {
             getAnuncios();
+            getSolicitudes();
     }, []));
     return (
         <View style={{
@@ -125,10 +126,8 @@ export default function HomeCasero({userName}: {userName: string}) {
                     </Text>
                 </Pressable>
             </ScrollView>
-            <NavBar active='home' solicitudes={1}/>            
+            <NavBar active='home' solicitudes={solicitudes.length}/>            
         </View>
-        
-        
     )
 }
 

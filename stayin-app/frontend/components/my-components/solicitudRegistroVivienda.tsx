@@ -2,11 +2,39 @@ import { Colors } from "@/constants/theme";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { View, StyleSheet, Text, useColorScheme, Image, ImageSourcePropType, Pressable } from "react-native";
 import EvilIcons from '@expo/vector-icons/EvilIcons';
+import { API_CONFIG } from '@/constants/config';
+import * as SecureStore from 'expo-secure-store';
 
-
-export function SolicitudRegistroVivienda({img, username, title}: {img?: ImageSourcePropType, username: string, title: string}) {
+export function SolicitudRegistroVivienda({img, username, title, id_anuncio, onActionComplete}: {img?: ImageSourcePropType, username: string, title: string, id_anuncio: number, onActionComplete: () => void}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
+    const handlePres = async (accepts: boolean, id_anuncio: number) => {
+        try {
+            const token = await SecureStore.getItemAsync('userToken');
+            const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.procesarSolicitud}`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify ({
+                    accepts: accepts,
+                    userName: username,
+                    id_anuncio: id_anuncio
+                }),
+            });
+            const resultado = await respuesta.json();
+            if(resultado.success == true) {
+                console.log(accepts ? 'Petición aceptada correctamente' : 'Petición rechazada correctamente');
+                onActionComplete();
+            } else {
+                console.warn(accepts ? 'No se ha podido aceptar la solicitud' : 'No se ha podido rechazar la solicitud');
+            }
+        } catch(error) {
+            console.error('Error al procesar solicitud: ', error);
+        }
+    }
     return (
         <View style={[styles.main]}>
             <View style={[styles.solicitudCard, {
@@ -34,10 +62,10 @@ export function SolicitudRegistroVivienda({img, username, title}: {img?: ImageSo
                     </View>
                 </View>
                 <View style={[styles.decision]}>
-                    <Pressable>
+                    <Pressable onPress={() => handlePres(true, id_anuncio)}>
                         <EvilIcons name="check" size={48} color={currentColors.acceptRequest} />
                     </Pressable>
-                    <Pressable>
+                    <Pressable onPress={() => handlePres(false, id_anuncio)}>
                         <EvilIcons name="close-o" size={48} color={currentColors.declineRequest} />
                     </Pressable>
                 </View>
@@ -55,7 +83,7 @@ const styles = StyleSheet.create({
         borderRadius: 13,
         padding: 10,
         alignItems: 'center',
-        justifyContent: 'space-between'        
+        justifyContent: 'space-between',
     },
     username: {
         fontSize: 18,

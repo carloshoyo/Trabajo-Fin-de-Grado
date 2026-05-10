@@ -117,7 +117,7 @@ export default function HomeInquilino() {
                     </Text>
                 </Pressable>
             </ScrollView>
-            <NavBar active="home" solicitudes={16}></NavBar>
+            <NavBar active="home" solicitudes={16} valoraciones={0} ></NavBar>
         </View>
     )
 }

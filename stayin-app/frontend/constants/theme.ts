@@ -10,6 +10,7 @@ const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
+    blurStyle: "dark",
     text: '#333333',
     background: '#fff',
     tint: tintColorLight,
@@ -35,10 +36,12 @@ export const Colors = {
     declineRequest: '#8d0000',
     acceptRequest: '#019b01',
     notificationsColor: '#f00',
+    shadowColor: '#000',
     imgSource: require('../assets/images/LogoFondoBlanco.png'),
     imgSource2: require('../assets/images/LogoFondoBlancoPequeño.png')
   },
   dark: {
+    blurStyle: "light",
     text: '#000',
     background: '#000',
     tint: tintColorDark,
@@ -64,6 +67,7 @@ export const Colors = {
     declineRequest: '#a90000',
     acceptRequest: '#01b401',
     notificationsColor: '#f00',
+    shadowColor: '#ffffff00',
     imgSource: require('../assets/images/LogoFondoNegro.png'),
     imgSource2: require('../assets/images/LogoFondoNegroPequeño.png')
   },

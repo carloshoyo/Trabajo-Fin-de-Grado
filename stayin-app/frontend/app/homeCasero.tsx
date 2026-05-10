@@ -9,6 +9,7 @@ import { useLogin } from '@/context/LoginContext';
 import { API_CONFIG } from '@/constants/config';
 import * as SecureStore from 'expo-secure-store';
 import { NavBar } from '@/components/my-components/navBar';
+import { setViewStyle } from 'react-native-reanimated/lib/typescript/css/native';
 
 interface Anuncio {
     titulo: string;
@@ -26,6 +27,7 @@ export default function HomeCasero({userName}: {userName: string}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+    const [valoracionesPendientes, setValoracionesPendientes] = useState([]);
     const [solicitudes, setSolicitudes] = useState([]);
     const getAnuncios = async () => {
         try {
@@ -44,6 +46,8 @@ export default function HomeCasero({userName}: {userName: string}) {
             const resultado = await respuesta.json();
             if(resultado.success == true) {
                 setAnuncios(resultado.adData);
+                setValoracionesPendientes(resultado.valoraciones_pendientes);
+                console.log('Valoraciones pendientes: ', resultado.valoraciones_pendientes);
             } else {
                 // Si el Portero rechaza (o hay cualquier otro error lógico)
                 console.warn("Petición rechazada por el servidor:", resultado.message);
@@ -126,7 +130,7 @@ export default function HomeCasero({userName}: {userName: string}) {
                     </Text>
                 </Pressable>
             </ScrollView>
-            <NavBar active='home' solicitudes={solicitudes.length}/>            
+            <NavBar active='home' solicitudes={solicitudes.length} valoraciones={valoracionesPendientes.length} />   
         </View>
     )
 }

@@ -1,11 +1,12 @@
 import { Colors } from "@/constants/theme";
-import { View, StyleSheet, Text, useColorScheme, Pressable, ScrollView, ImageSourcePropType } from "react-native";
+import { View, StyleSheet, Text, useColorScheme, Pressable, ScrollView, ImageSourcePropType, PlatformColor } from "react-native";
 import { SolicitudRegistroVivienda } from "@/components/my-components/solicitudRegistroVivienda";
 import * as SecureStore from 'expo-secure-store';
 import { API_CONFIG } from "@/constants/config";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { NavBar } from "@/components/my-components/navBar";
+import { RatingCard } from "@/components/my-components/ratingCard";
 
 interface Solicitud {
     id_solicitud: number,
@@ -15,11 +16,21 @@ interface Solicitud {
     titulo_anuncio: string
 }
 
+interface Valoracion {
+    img_perfil: ImageSourcePropType,
+    id_valoracion: number,
+    usuario_a_valorar: string,
+    id_valorado: number,
+    id_estancia: number,
+    titulo_anuncio: string
+}
+
 export default function ScreenSocial() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
-    const getSolicitudes = async () => {
+    const [valoraciones, setValoraciones] = useState<Valoracion[]>([]);
+    const getNotificaciones = async () => {
         try {
             const token = await SecureStore.getItemAsync('userToken');
             const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.cargarSolicitudes}`, {
@@ -33,6 +44,7 @@ export default function ScreenSocial() {
             const resultado = await respuesta.json();
             if(resultado.success == true) {
                 setSolicitudes(resultado.solicitudes);
+                setValoraciones(resultado.valoraciones);
             } else {
                 console.warn('El servidor ha rechazado la petición: ', resultado.message);
             }
@@ -49,7 +61,7 @@ export default function ScreenSocial() {
 
     useFocusEffect(
             useCallback(() => {
-                getSolicitudes();
+                getNotificaciones();
         }, []));
     return(
         <View style={{flex: 1}}>
@@ -65,19 +77,50 @@ export default function ScreenSocial() {
                     Solicitudes pendientes
                 </Text>
                 <View style={[styles.solicitudes]}>
-                    {solicitudes.map((solicitud, index) => (
-                        <SolicitudRegistroVivienda 
-                            key={index}
-                            username={solicitud.username}
-                            title={solicitud.titulo_anuncio}
-                            img={solicitud.img}
-                            id_anuncio={solicitud.id_anuncio}
-                            onActionComplete={() => quitarSolicitudDeLaPantalla(solicitud.id_solicitud)} 
-                        />
-                    ))}
+                    {solicitudes.length > 0 ? (
+                        solicitudes.map((solicitud, index) => (
+                            <SolicitudRegistroVivienda 
+                                key={index}
+                                username={solicitud.username}
+                                title={solicitud.titulo_anuncio}
+                                img={solicitud.img}
+                                id_anuncio={solicitud.id_anuncio}
+                                onActionComplete={() => quitarSolicitudDeLaPantalla(solicitud.id_solicitud)} 
+                            />
+                        ))
+                    ) : (
+                        <Text style={{color: currentColors.placeholderColor, textAlign: 'center'}}>
+                            No hay solicitudes pendientes
+                        </Text>
+                    )}
+                    
+                </View>
+                <Text style={[styles.title, {
+                    color: currentColors.formTextColor
+                }]}>
+                    Valoraciones pendientes
+                </Text>
+                <View style={[styles.solicitudes]}>
+                    {valoraciones.length > 0 ? (
+                        valoraciones.map((valoracion, index) => (
+                            <RatingCard
+                                key={index}
+                                usuario_a_valorar={valoracion.usuario_a_valorar}
+                                title={valoracion.titulo_anuncio}
+                                img={valoracion.img_perfil}
+                                id_estancia={valoracion.id_estancia}
+                                id_valorado={valoracion.id_valorado}
+                            />
+                        ))
+                    ) : (
+                        <Text style={{color: currentColors.placeholderColor, textAlign: 'center'}}>
+                            No hay valoraciones pendientes
+                        </Text>
+                    )}
+                    
                 </View>
             </ScrollView>
-            <NavBar active={"social"} solicitudes={0}/>
+            <NavBar active={"social"} solicitudes={solicitudes.length} valoraciones={valoraciones.length} />
         </View>
     )
 };

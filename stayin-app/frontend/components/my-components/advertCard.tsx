@@ -18,7 +18,8 @@ export function AdvertCard({title, img, direccion, precio, descripcion, area, ma
         <Pressable 
             style={[styles.card, {
                 backgroundColor: currentColors.flatCardBackground,
-                borderColor: currentColors.flatCardBorderColor
+                borderColor: currentColors.flatCardBorderColor,
+                shadowColor: currentColors.shadowColor
             }]}
             onPress={handleContinuar}
         >
@@ -66,8 +67,12 @@ export function AdvertCard({title, img, direccion, precio, descripcion, area, ma
 const styles = StyleSheet.create({
     card: {
         borderRadius: 13,
-        borderWidth: 3,
-        width: '100%'
+        borderWidth: 2,
+        width: '100%',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 3,
     },
     img: {
         width: '100%',

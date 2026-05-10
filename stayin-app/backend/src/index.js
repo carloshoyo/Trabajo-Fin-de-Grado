@@ -181,12 +181,25 @@ app.post('/api/home/casero', verificarToken, async(req, res) => {
                 message: 'El usuario no tiene anuncios publicados',
                 adData: []
             });
-        }
+        };
+
+        const respuesta_id_estancia = await client.query(`
+            SELECT e.id_estancia 
+                FROM Estancias e
+                JOIN Viviendas v ON e.id_vivienda = v.id_vivienda
+                LEFT JOIN Valoraciones val ON e.id_estancia = val.id_estancia AND val.id_valorador = $1
+                WHERE 
+                    (e.id_inquilino = $1 OR v.id_casero = $1) 
+                    AND e.f_fin_estancia IS NOT NULL
+                    AND val.id_valoracion IS NULL;`, [id_casero]);
+
+        const valoraciones_pendientes = respuesta_id_estancia.rows.map(fila => fila.id_estancia);
         
         res.status(200).json({
             success: true,
             message: 'El usuario tiene anuncios publicados',
-            adData: resultado.rows
+            adData: resultado.rows,
+            valoraciones_pendientes: valoraciones_pendientes
         });
         
         
@@ -374,7 +387,7 @@ app.post('/api/solicitudes/casero', verificarToken, async(req, res) => {
     const client = await pool.connect();
 
     try {
-        const resultado = await client.query(`
+        const resultado_solicitudes = await client.query(`
             SELECT 
                 s.id_solicitud,
                 s.id_anuncio, 
@@ -388,11 +401,39 @@ app.post('/api/solicitudes/casero', verificarToken, async(req, res) => {
                 ORDER BY s.f_solicitud DESC;`, 
                 [id_casero]);
 
-        console.log('Las solicitudes son: ', resultado);
+        const resultado_valoraciones = await client.query(`
+            SELECT 
+                e.id_estancia,
+                e.f_fin_estancia,
+                a.titulo AS titulo_anuncio,
+                u.img_perfil,
+                u.id_usuario AS id_usuario_a_valorar,
+                u.username AS usuario_a_valorar,
+                CASE 
+                    WHEN e.id_inquilino = $1 THEN v.id_casero 
+                    ELSE e.id_inquilino 
+                END AS id_valorado
+            FROM Estancias e
+            JOIN Viviendas v ON e.id_vivienda = v.id_vivienda
+            JOIN Anuncios a ON v.id_vivienda = a.id_vivienda
+            JOIN Usuarios u ON u.id_usuario = (
+                CASE 
+                    WHEN e.id_inquilino = $1 THEN v.id_casero 
+                    ELSE e.id_inquilino 
+                END
+            )
+            LEFT JOIN Valoraciones val ON e.id_estancia = val.id_estancia AND val.id_valorador = $1
+            WHERE 
+                (e.id_inquilino = $1 OR v.id_casero = $1) 
+                AND e.f_fin_estancia IS NOT NULL
+                AND val.id_valoracion IS NULL;`, 
+            [id_casero]);
+
         res.status(200).json({
             success: true,
             message: 'Se han enviado las solicitudes con éxito',
-            solicitudes: resultado.rows
+            solicitudes: resultado_solicitudes.rows,
+            valoraciones: resultado_valoraciones.rows
         });
     } catch(error) {
         console.error('Error al mostrar las solicitudes del usuario: ', error);
@@ -454,6 +495,78 @@ app.post('/api/solicitudes/procesar', verificarToken, async (req, res) => {
             success: false,
             message: 'No se ha podido completar la solicitud correctamente'
         });
+    }
+});
+
+app.post('/api/valoraciones/usuario', verificarToken, async(req, res) => {
+    const id_valorador = req.user.id_usuario;
+
+    const client = await pool.connect();
+
+    try {
+        const resultado = await client.query(`SELECT * FROM Criterios_Valoracion ORDER BY id_criterio;`);
+
+        const cuestiones = resultado.rows;
+
+        res.status(200).json({
+            success: true,
+            message: 'Se han obtenido las cuestiones de las valoraciones correctamente',
+            cuestiones: cuestiones
+        })
+    } catch(error) {
+        console.log('Error al obtener las preguntas de las valoraciones: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener las preguntas de las valoraciones'
+        })
+    } finally {
+        client.release();
+    }
+});
+
+app.post('/api/valoraciones/usuario/enviar', verificarToken, async (req, res) => {
+    const id_usuario = req.user.id_usuario;
+
+    const calificaciones = req.body.calificaciones;
+    const id_valorado = req.body.id_valorado;
+    const id_estancia = req.body.id_estancia;
+
+    const array_calificaciones = Object.entries(calificaciones);
+
+    const client = await pool.connect();
+
+    try {
+        await client.query(`BEGIN;`);
+
+        const respuesta_valoracion = await client.query(`
+            INSERT INTO Valoraciones(id_estancia, id_valorador, id_valorado, comentario)
+            VALUES ($1, $2, $3, $4) RETURNING id_valoracion`,
+            [id_estancia, id_usuario, id_valorado, '']);
+
+        const id_valoracion = respuesta_valoracion.rows[0].id_valoracion;
+
+        for (const calificacion of array_calificaciones) {
+            await client.query(`
+                INSERT INTO Puntuacion_Criterios(id_criterio, id_valoracion, puntuacion)
+                VALUES($1, $2, $3)`,
+                [calificacion[0], id_valoracion, calificacion[1]]);
+        }
+
+        await client.query(`COMMIT;`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Se ha almacenado la valoración correctamente'
+        });
+    } catch(error) {
+        await client.query('ROLLBACK;');
+        console.error('Error: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'No se han podido enviar las calificaciones'
+        })
+    } finally {
+        client.release();
     }
 })
 

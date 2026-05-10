@@ -10,5 +10,7 @@ export const API_CONFIG = {
         registrarSolicitud: '/api/solicitudes/crear',
         cargarSolicitudes: '/api/solicitudes/casero',
         procesarSolicitud: '/api/solicitudes/procesar',
+        valorarUsuario: '/api/valoraciones/usuario',
+        enviarCalificacionesUsuario: '/api/valoraciones/usuario/enviar',
     }
 };

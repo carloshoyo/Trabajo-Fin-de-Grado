@@ -6,7 +6,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { RelativePathString, router } from "expo-router";
 
-export function NavBar({active, solicitudes}: {active: string, solicitudes: number}) {
+export function NavBar({active, solicitudes, valoraciones}: {active: string, solicitudes: number, valoraciones: number}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const moveTo = (screen: RelativePathString) => {
@@ -31,14 +31,14 @@ export function NavBar({active, solicitudes}: {active: string, solicitudes: numb
                 </Pressable>
                 
                 <View style={[styles.notifications]}>
-                    {solicitudes > 0 ? (
+                    {solicitudes + valoraciones > 0 ? (
                     <View style={[styles.notificationsNumberView, {
                         backgroundColor: currentColors.notificationsColor
                     }]}>
                         <Text style={[styles.notificationsNumber, {
                             color: '#fff'
                         }]}>
-                            {solicitudes}
+                            {solicitudes + valoraciones}
                         </Text>
                     </View>
                     ) : (

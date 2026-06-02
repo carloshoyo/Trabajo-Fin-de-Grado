@@ -40,7 +40,7 @@ export function InsertRoomImages({title, room}: {title: string, room: string}) {
     };
     return (
         <View style={[title==="" ? styles.mainNoTitle : styles.mainTitle, {
-            borderColor: currentColors.postAdContinueColor,
+            borderColor: currentColors.postAdClose,
             backgroundColor: currentColors.postAdInputTextColor
         }]}>
             <Pressable style={[styles.pressableArea]} onPress={seleccionarMultimedia}>

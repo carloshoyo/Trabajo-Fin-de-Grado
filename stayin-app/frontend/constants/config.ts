@@ -12,5 +12,8 @@ export const API_CONFIG = {
         procesarSolicitud: '/api/solicitudes/procesar',
         valorarUsuario: '/api/valoraciones/usuario',
         enviarCalificacionesUsuario: '/api/valoraciones/usuario/enviar',
-    }
+        registrarInteraccion: '/api/interaccion/new',
+        eliminarFavoritos: '/api/interaccion/eliminarFavoritos',
+    },
+    motorUrl: process.env.EXPO_PUBLIC_MOTOR_URL,
 };

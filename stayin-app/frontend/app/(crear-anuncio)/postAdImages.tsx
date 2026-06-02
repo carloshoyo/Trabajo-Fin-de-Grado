@@ -79,7 +79,7 @@ export default function PostAd() {
     }
     return (
         <View style={[styles.main, {
-            backgroundColor: currentColors.background
+            backgroundColor: currentColors.postAdContainerColor
         }]}>
             <ScrollView style={[styles.scrollArea]}
                 contentContainerStyle={[styles.scrollContent, {

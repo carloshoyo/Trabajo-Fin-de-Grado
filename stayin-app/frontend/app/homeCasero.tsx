@@ -49,13 +49,10 @@ export default function HomeCasero({userName}: {userName: string}) {
                 setValoracionesPendientes(resultado.valoraciones_pendientes);
                 console.log('Valoraciones pendientes: ', resultado.valoraciones_pendientes);
             } else {
-                // Si el Portero rechaza (o hay cualquier otro error lógico)
                 console.warn("Petición rechazada por el servidor:", resultado.message);
                 
-                // Aquí puedes añadir lógica de negocio, por ejemplo:
-                // Si el mensaje es de token caducado, puedes forzar un logout automático
                 if (resultado.message === 'Token inválido o caducado.' || resultado.message === 'Acceso denegado. No hay token.') {
-                    logout(); // Expulsa al usuario por seguridad
+                    logout();
                 }
             }
         } catch(error) {
@@ -130,7 +127,12 @@ export default function HomeCasero({userName}: {userName: string}) {
                     </Text>
                 </Pressable>
             </ScrollView>
-            <NavBar active='home' solicitudes={solicitudes.length} valoraciones={valoracionesPendientes.length} />   
+            <NavBar 
+                active='home' 
+                solicitudes={solicitudes.length} 
+                valoraciones={valoracionesPendientes.length} 
+                home={'/homeCasero'}
+            />   
         </View>
     )
 }

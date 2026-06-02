@@ -4,7 +4,8 @@ import { router } from 'expo-router';
 
 interface LoginData {
     userName: string;
-    password?: string    
+    password?: string;
+    rol?: string;
 }
 
 const LoginContext = createContext<any>(null);
@@ -12,6 +13,7 @@ const LoginContext = createContext<any>(null);
 export function LoginProvider({children}: {children: ReactNode}) {
     const [loginData, setLoginData] = useState<LoginData>({
         userName: '',
+        rol: '',
     })
 
     const updateData = (newData: Partial<LoginData>) => {
@@ -24,7 +26,7 @@ export function LoginProvider({children}: {children: ReactNode}) {
             await SecureStore.deleteItemAsync('userRole');
             await SecureStore.deleteItemAsync('userName');
 
-            setLoginData({userName: ''});
+            setLoginData({userName: '', rol: ''});
 
             router.replace('/');
         } catch(error) {
@@ -40,7 +42,10 @@ export function LoginProvider({children}: {children: ReactNode}) {
                 const userNameGuardado = await SecureStore.getItemAsync('userName');
 
                 if(tokenGuardado && rolGuardado && userNameGuardado) {
-                    updateData({userName: userNameGuardado})                    ;
+                    updateData({
+                        userName: userNameGuardado,
+                        rol: rolGuardado
+                    })                    ;
 
                     if(rolGuardado === 'Inquilino') {
                         router.replace('/homeInquilino');

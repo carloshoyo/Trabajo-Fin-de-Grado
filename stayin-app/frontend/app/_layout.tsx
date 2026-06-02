@@ -27,7 +27,12 @@ export default function RootLayout() {
             />
             <Stack.Screen 
               name="homeInquilino" 
-              options={{ headerShown: false }} 
+              options={{ 
+                headerShown: false,
+                animation: 'fade',
+                animationDuration: 200
+              }}
+              
             />
             <Stack.Screen 
               name="(crear-anuncio)" 

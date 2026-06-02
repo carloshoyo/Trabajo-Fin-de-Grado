@@ -71,7 +71,7 @@ app.post('/api/register', async (req, res) => {
             userData.name,
             userData.apellidos, 
             userData.rol, 
-            encryptedPasswd, // ¡Dato encriptado!
+            encryptedPasswd, 
             userData.birth_date, 
             userData.gender
         ]);
@@ -121,7 +121,9 @@ app.post('/api/login', async(req, res) => {
     const client = await pool.connect();
 
     try {
-        const resultado = await client.query('SELECT id_usuario, passwd, rol FROM Usuarios WHERE username=$1 OR email=$1 OR numero_tlf=$1', [
+        const resultado = await client.query(`
+            SELECT id_usuario, passwd, rol FROM Usuarios WHERE username=$1
+            OR email=$1 OR numero_tlf=$1`, [
             loginData.userName
         ]);
         if(resultado.rows.length === 0) {
@@ -230,17 +232,17 @@ app.post('/api/postad', verificarToken, async(req, res) => {
         const id_casero = userResult.rows[0].id_usuario;
 
         const viviendaResult = await client.query(`INSERT INTO Viviendas(id_casero, area, direccion,  max_inquilinos, 
-                            descripcion, numero, puerta, cpostal) VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+                            numero, puerta, cpostal) VALUES($1, $2, $3, $4, $5, $6, $7)
                             RETURNING id_vivienda;`, [
                                 id_casero,adData.area, adData.direccion, adData.max_inquilinos,
-                                adData.descripcion, adData.numero, adData.puerta, adData.cp
+                                adData.numero, adData.puerta, adData.cp
                             ]);
 
         const id_vivienda = viviendaResult.rows[0].id_vivienda;
 
-        await client.query(`INSERT INTO Anuncios(id_vivienda, id_casero, titulo, img, direccion,
-                            precio, multimedia) VALUES($1, $2, $3, $4, $5, $6)`, [
-                                id_vivienda, id_casero, adData.title, adData.portada,
+        await client.query(`INSERT INTO Anuncios(id_vivienda, id_casero, titulo, img,
+                            descripcion, precio, multimedia) VALUES($1, $2, $3, $4, $5, $6, $7)`, [
+                                id_vivienda, id_casero, adData.title, adData.portada, adData.descripcion,
                                 adData.precio, adData.multimedia
                             ]);
 
@@ -312,23 +314,52 @@ app.post('/api/home/inquilino', verificarToken, async (req, res) => {
 
     try {
 
-        const id_casero = req.user.id_usuario; //Viene del token del user
+        const id_inquilino = req.user.id_usuario; //Viene del token del user
 
-        const resultado = await client.query(`SELECT DISTINCT a.*, v.*
-                                            FROM Viviendas v
-                                            JOIN Anuncios a ON v.id_vivienda = a.id_vivienda`);
+        const resultado = await client.query(`
+                SELECT 
+                    a.*, 
+                    v.*,
+                    EXISTS (
+                        SELECT 1 
+                        FROM Interacciones_Anuncios i 
+                        WHERE i.id_anuncio = a.id_anuncio 
+                        AND i.id_inquilino = $1 
+                        AND i.tipo_interaccion = 'favoritos'
+                    ) AS es_favorito
+                FROM Viviendas v
+                JOIN Anuncios a ON v.id_vivienda = a.id_vivienda
+                ORDER BY es_favorito DESC;
+            `,
+                [id_inquilino]
+        );
+
+        const respuesta_id_estancia = await client.query(`
+            SELECT e.id_estancia 
+                FROM Estancias e
+                JOIN Viviendas v ON e.id_vivienda = v.id_vivienda
+                LEFT JOIN Valoraciones val ON e.id_estancia = val.id_estancia AND val.id_valorador = $1
+                WHERE 
+                    (e.id_inquilino = $1 OR v.id_casero = $1) 
+                    AND e.f_fin_estancia IS NOT NULL
+                    AND val.id_valoracion IS NULL;`, [id_casero]);
+
+        const valoraciones_pendientes = respuesta_id_estancia.rows.map(fila => fila.id_estancia);
+
         if(resultado.rows.length === 0) {
             return res.status(200).json({
                 success: true,
                 message: 'No hay anuncios publicados',
-                adData: []
+                adData: [],
+                valoraciones_pendientes: valoraciones_pendientes
             });
         }
         
         res.status(200).json({
             success: true,
             message: 'Hay anuncios publicados',
-            adData: resultado.rows
+            adData: resultado.rows,
+            valoraciones_pendientes: valoraciones_pendientes
         });
         
         
@@ -568,9 +599,79 @@ app.post('/api/valoraciones/usuario/enviar', verificarToken, async (req, res) =>
     } finally {
         client.release();
     }
+});
+
+app.post('/api/interaccion/new', verificarToken, async (req, res) => {
+    const id_usuario = req.user.id_usuario;
+
+    const client = await pool.connect();
+
+    const id_anuncio = req.body.id_anuncio;
+    const tipo = req.body.tipo;
+    const peso = req.body.peso;
+
+    try {
+        await client.query('BEGIN');
+
+        await client.query(`
+            INSERT INTO 
+            Interacciones_Anuncios
+            (id_inquilino, id_anuncio, peso_interaccion, tipo_interaccion)
+            VALUES
+            ($1, $2, $3, $4);
+            `,
+            [id_usuario, id_anuncio, peso, tipo]
+        );
+
+        await client.query('COMMIT');
+
+        res.status(200).json({
+            success: true,
+            message: 'Interacción almacenada correctamente'
+        })
+
+    } catch(error) {
+        console.error('Error: ', error);
+        res.status(500).json({
+            success:  false,
+            message: 'Error al almacenar la interaccion'
+        })
+    }
+});
+
+app.post('/api/interaccion/eliminarFavoritos', verificarToken, async (req, res) => {
+    const id_inquilino = req.user.id_usuario;
+    const id_anuncio = req.body.id_anuncio;
+    const client = await pool.connect();
+
+    try {
+        await client.query(`
+                DELETE FROM 
+                    Interacciones_Anuncios 
+                    WHERE
+                    id_inquilino = $1 
+                    AND 
+                    id_anuncio = $2
+                    AND
+                    tipo_interaccion = 'favoritos';
+            `, [
+                id_inquilino, id_anuncio
+            ]);
+
+        res.status(200).json({
+            success: true,
+            message: 'Anuncio eliminado de favoritos correctamente'
+        });
+    } catch(error) {
+        console.error('Error', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al intentar quitar  de favoritos'
+        })
+    }
 })
 
 // Arranque del servidor
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

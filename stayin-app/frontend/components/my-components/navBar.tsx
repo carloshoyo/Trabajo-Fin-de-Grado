@@ -4,14 +4,26 @@ import { Colors } from "@/constants/theme";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { RelativePathString, router } from "expo-router";
+import { Href, RelativePathString, useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+import { useLogin } from "@/context/LoginContext";
 
-export function NavBar({active, solicitudes, valoraciones}: {active: string, solicitudes: number, valoraciones: number}) {
+export function NavBar({active, solicitudes, valoraciones, home}: {active: string, solicitudes?: number, valoraciones: number, home: Href}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
+    const router = useRouter();
+    const { loginData } = useLogin();
+    const navigateHome = () => {
+        if (loginData?.rol === 'Casero') {
+            router.replace('/homeCasero' as Href);
+        } else {
+            router.replace('/homeInquilino' as Href);
+        }
+    }
     const moveTo = (screen: RelativePathString) => {
         router.replace(screen);
-    }
+    }          
+        
     return (
         <View style={[styles.main, {
             backgroundColor: currentColors.background
@@ -20,7 +32,7 @@ export function NavBar({active, solicitudes, valoraciones}: {active: string, sol
                 borderColor: currentColors.navBorderColor,
                 backgroundColor: currentColors.background
             }]}>
-                <Pressable style={[styles.pressables]} onPress={() => moveTo('/homeCasero')}>
+                <Pressable style={[styles.pressables]} onPress={() => navigateHome()}>
                     <Ionicons name={active==='home' ? "home" : "home-outline"} size={24} color={currentColors.formButtonColor}/>
                 </Pressable>
                 <Pressable style={[styles.pressables]}>
@@ -76,7 +88,7 @@ const styles = StyleSheet.create({
     notificationsNumberView: {
         position: 'absolute',
         zIndex: 10,
-        borderRadius: 10000,
+        borderRadius: 100,
         padding: 1,
         justifyContent: 'center',
         alignItems: 'center',
@@ -88,7 +100,7 @@ const styles = StyleSheet.create({
     },
     notificationsNumber: {
         fontSize: 10,
-        fontWeight: '500'
+        fontWeight: 'bold'
     },
     pressables: {
         padding: 5

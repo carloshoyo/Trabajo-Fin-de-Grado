@@ -1,107 +1,71 @@
-// import { View, Image, StyleSheet, ImageSourcePropType, Text, useColorScheme, Pressable } from "react-native";
-// import { Ionicons } from '@expo/vector-icons';
-// import { Colors } from "@/constants/theme";
-// import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-// import { router } from "expo-router";
-
-// export function FlatCard({title, img, direccion, precio, descripcion, area, max_inquilinos, id_anuncio}: {title: string, img: ImageSourcePropType, direccion: string, precio: number, descripcion: string, area: number, max_inquilinos: number, id_anuncio: number}) {
-//     const theme = useColorScheme() ?? 'light';
-//     const currentColors = Colors[theme];
-//     const handlePress = () => {
-//         router.push('/adViewInquilino');
-//     }
-//     return (
-//         <Pressable 
-//             style={[styles.card, {
-//                 backgroundColor: currentColors.flatCardBackground,
-//                 borderColor: currentColors.flatCardBorderColor
-//             }]}
-//             onPress={handlePress}
-//         >
-//             <Image
-//                 style={[styles.img]}
-//                 source={img}
-//                 resizeMode="cover"
-//             />
-//             <View style={[styles.flatInfo]}>
-//                 <Text style={[styles.title, {
-//                     color: currentColors.formTextColor
-//                 }]}>
-//                     {title}
-//                 </Text>
-//                 <Text style={[styles.direccion, {
-//                     color: currentColors.formTextColor
-//                 }]}>
-//                     {direccion}
-//                 </Text>
-//                 <Text>
-//                     {}
-//                 </Text>
-//                 <Text style={[styles.precio, {
-//                     color: currentColors.formTextColor
-//                 }]}>
-//                     {precio}€/mes
-//                 </Text>
-//                 <View style={[styles.viewIcons]}>
-//                     <Ionicons name="chatbox-outline" size={24} color={currentColors.formButtonColor}/>
-//                     <MaterialCommunityIcons name="cards-heart-outline" size={24} color={currentColors.formButtonColor}/>
-//                 </View>
-//             </View>
-//         </Pressable>
-//     )
-// }
-
-// const styles = StyleSheet.create({
-//     card: {
-//         borderRadius: 13,
-//         borderWidth: 3
-//     },
-//     img: {
-//         width: '100%',
-//         height: 250,
-//         borderTopLeftRadius: 11,
-//         borderTopRightRadius: 11
-//     },
-//     viewIcons: {
-//         display: 'flex',
-//         width: '100%',
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         padding: 10
-//     },
-//     flatInfo: {
-//         padding: 10,
-//         gap: 5
-//     },
-//     title: {
-//         fontSize: 24,
-//         fontWeight: '400'
-//     },
-//     direccion: {
-//         fontSize: 16
-//     },
-//     precio: {
-//         fontSize: 28,
-//         fontWeight: 'bold'
-//     }
-// })
-
 import { View, Image, StyleSheet, ImageSourcePropType, Text, useColorScheme, Pressable } from "react-native";
 import { Colors } from "@/constants/theme";
 import { router } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as SecureStore from 'expo-secure-store';
+import { API_CONFIG } from "@/constants/config";
+import { useState } from "react";
 
-export function FlatCard({title, img, direccion, precio, descripcion, area, max_inquilinos, id_anuncio}: {title: string, img: string, direccion: string, precio: number, descripcion: string, area: number, max_inquilinos: number, id_anuncio: number}) {
+export function FlatCard({title, img, direccion, precio, descripcion, area, max_inquilinos, id_anuncio, es_favorito}: {title: string, img: string, direccion: string, precio: number, descripcion: string, area: number, max_inquilinos: number, id_anuncio: number, es_favorito?: boolean}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
+    const [isFavourite, setIsFavourite] = useState(es_favorito || false);
     const handleContinuar = () => {
         router.push({
             pathname: '/adViewInquilino',
             params: {title: title, img: img, direccion: direccion, precio: precio, descripcion: descripcion, area: area, max_inquilinos: max_inquilinos, id_anuncio: id_anuncio}
 
         });
+    }
+
+    const handleInteraction = async (tipo: String, peso: number) => {
+        const favoritoAnterior = isFavourite;
+        setIsFavourite(!isFavourite);
+        try {
+            const token = await SecureStore.getItemAsync('userToken');
+            const id_usuario = await SecureStore.getItemAsync('userId');
+            const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.registrarInteraccion}`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    id_inquilino: id_usuario,
+                    id_anuncio: id_anuncio,
+                    tipo: tipo,
+                    peso: peso
+                })
+            })
+        } catch(error) {
+            setIsFavourite(favoritoAnterior);
+        }
+    };
+
+    const handleQuitarFav = async () => {
+        const favoritoAnterior = isFavourite;
+        setIsFavourite(!isFavourite);
+        try {
+            const token = await SecureStore.getItemAsync('userToken');
+            const id_inquilino = await SecureStore.getItemAsync('userId');
+            const respuesta = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.endpoints.eliminarFavoritos}`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    id_anuncio: id_anuncio
+                })
+            });
+        } catch(error) {
+            setIsFavourite(favoritoAnterior);
+            console.error('Error: ', error);
+        }
     }
     return (
         <Pressable 
@@ -147,8 +111,12 @@ export function FlatCard({title, img, direccion, precio, descripcion, area, max_
                     </Text>
                 </View>
                 <View style={[styles.viewIcons]}>
-                    <Ionicons name="chatbox-outline" size={24} color={currentColors.formButtonColor}/>
-                    <MaterialCommunityIcons name="cards-heart-outline" size={24} color={currentColors.formButtonColor}/>
+                    <Pressable>
+                        <Ionicons name="chatbox-outline" size={24} color={currentColors.formButtonColor}/>
+                    </Pressable>
+                    <Pressable onPress={!isFavourite ? () => handleInteraction('favoritos', 50) : () => handleQuitarFav()}>
+                        <MaterialCommunityIcons name={isFavourite ? "cards-heart" : "cards-heart-outline"} size={24} color={isFavourite ? currentColors.notificationsColor : currentColors.formButtonColor}/>
+                    </Pressable>
                 </View>       
             </View>
         </Pressable>

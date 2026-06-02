@@ -76,7 +76,7 @@ export default function PostAd() {
     };
     return (
         <View style={[styles.main, {
-            backgroundColor: currentColors.background
+            backgroundColor: currentColors.postAdContainerColor
         }]}>
             <ScrollView style={[styles.scrollArea]}
                 contentContainerStyle={[styles.scrollContent, {
@@ -98,7 +98,7 @@ export default function PostAd() {
                     placeholder="Título"
                     style={[styles.input, {
                         backgroundColor: currentColors.postAdInput,
-                        borderColor: currentColors.postAdBorderColor
+                        borderColor: currentColors.postAdInputTextColor
                     }]}
                     placeholderTextColor={currentColors.postAdInputTextColor}
                     value={title}
@@ -109,7 +109,7 @@ export default function PostAd() {
                     placeholder="Dirección"
                     style={[styles.input, {
                         backgroundColor: currentColors.postAdInput,
-                        borderColor: currentColors.postAdBorderColor
+                        borderColor: currentColors.postAdInputTextColor
                     }]}
                     placeholderTextColor={currentColors.postAdInputTextColor}
                     value={direccion}
@@ -121,7 +121,7 @@ export default function PostAd() {
                         placeholder="Nº"
                         style={[styles.inputCP, {
                             backgroundColor: currentColors.postAdInput,
-                            borderColor: currentColors.postAdBorderColor
+                            borderColor: currentColors.postAdInputTextColor
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
@@ -133,7 +133,7 @@ export default function PostAd() {
                         placeholder="Puerta"
                         style={[styles.inputCP, {
                             backgroundColor: currentColors.postAdInput,
-                            borderColor: currentColors.postAdBorderColor
+                            borderColor: currentColors.postAdInputTextColor
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
@@ -145,7 +145,7 @@ export default function PostAd() {
                         placeholder="Código postal"
                         style={[styles.inputCP, {
                             backgroundColor: currentColors.postAdInput,
-                            borderColor: currentColors.postAdBorderColor
+                            borderColor: currentColors.postAdInputTextColor
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
@@ -159,7 +159,7 @@ export default function PostAd() {
                         placeholder="Area"
                         style={[styles.inputCP, {
                             backgroundColor: currentColors.postAdInput,
-                            borderColor: currentColors.postAdBorderColor
+                            borderColor: currentColors.postAdInputTextColor
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
@@ -171,7 +171,7 @@ export default function PostAd() {
                         placeholder="Número de inquilinos"
                         style={[styles.inputCP, {
                             backgroundColor: currentColors.postAdInput,
-                            borderColor: currentColors.postAdBorderColor
+                            borderColor: currentColors.postAdInputTextColor
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
@@ -183,7 +183,7 @@ export default function PostAd() {
                         placeholder="Precio"
                         style={[styles.inputCP, {
                             backgroundColor: currentColors.postAdInput,
-                            borderColor: currentColors.postAdBorderColor
+                            borderColor: currentColors.postAdInputTextColor
                         }]}
                         placeholderTextColor={currentColors.postAdInputTextColor}
                         keyboardType="numeric"
@@ -196,7 +196,7 @@ export default function PostAd() {
                     placeholder="Descripción"
                     style={[styles.input, styles.textArea, {
                         backgroundColor: currentColors.postAdInput,
-                        borderColor: currentColors.postAdBorderColor
+                        borderColor: currentColors.postAdInputTextColor
                     }]}
                     placeholderTextColor={currentColors.postAdInputTextColor}
                     multiline={true}
@@ -212,7 +212,7 @@ export default function PostAd() {
                 >
                     <View style={[styles.attachDocs, {
                         backgroundColor: currentColors.postAdInput,
-                        borderColor: currentColors.postAdBorderColor
+                        borderColor: currentColors.postAdInputTextColor
                     }]}>
                         <Text style={{
                             color: currentColors.postAdBorderColor

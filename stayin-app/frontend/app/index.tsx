@@ -59,6 +59,11 @@ export default function LoginScreen() {
                 await SecureStore.setItemAsync('userToken', resultado.userData.token);
                 await SecureStore.setItemAsync('userRole', resultado.userData.rol);
                 await SecureStore.setItemAsync('userName', email);
+                await SecureStore.setItemAsync('userId', String(resultado.userData.id_usuario));
+                updateData({
+                    userName: email,
+                    rol: resultado.userData.rol
+                })
                 console.log('El rol del resultado es: ')
                 console.log(resultado.userData.rol);
                 return resultado.userData.rol;

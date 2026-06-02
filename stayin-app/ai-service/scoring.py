@@ -398,8 +398,123 @@ if __name__ == "__main__":
         }
     }
 
+    mock_pref_usuario2 = {
+        "higiene_y_orden": {
+            "frecuencia_limpieza": 5,
+            "gestion_vajilla": 4,
+            "zonas_comunes": 5
+        },
+        "economia_y_responsabilidad": {
+            "puntualidad_pagos": 5,
+            "gastos_compartidos": 4,
+            "consumo_responsable": 3
+        },
+        "ruido_y_horarios": {
+            "respeto_descanso": 5
+        },
+        "visitas": {
+            "frecuencia_visitas": 2,
+            "respeto_zonas_comunes": 4
+        },
+        "comunicacion": {
+            "resolucion_conflictos": 4,
+            "empatia": 5,
+            "expresividad": 3
+        },
+        "respeto_propiedad": {
+            "cuidado_mobiliario": 5
+        }
+    }
+
+    mock_real_usuario2 = {
+        "higiene_y_orden": {
+            "frecuencia_limpieza": 4,
+            "gestion_vajilla": 3,
+            "zonas_comunes": 4
+        },
+        "economia_y_responsabilidad": {
+            "puntualidad_pagos": 4,
+            "gastos_compartidos": 4,
+            "consumo_responsable": 3
+        },
+        "ruido_y_horarios": {
+            "respeto_descanso": 5
+        },
+        "visitas": {
+            "frecuencia_visitas": 3,
+            "respeto_zonas_comunes": 3
+        },
+        "comunicacion": {
+            "resolucion_conflictos": 4,
+            "empatia": 4,
+            "expresividad": 3
+        },
+        "respeto_propiedad": {
+            "cuidado_mobiliario": 4
+        }
+    }
+
+    mock_pref_companero1 = {
+        "higiene_y_orden": {
+            "frecuencia_limpieza": 5,
+            "gestion_vajilla": 4,
+            "zonas_comunes": 5
+        },
+        "economia_y_responsabilidad": {
+            "puntualidad_pagos": 5,
+            "gastos_compartidos": 4,
+            "consumo_responsable": 3
+        },
+        "ruido_y_horarios": {
+            "respeto_descanso": 5
+        },
+        "visitas": {
+            "frecuencia_visitas": 2,
+            "respeto_zonas_comunes": 4
+        },
+        "comunicacion": {
+            "resolucion_conflictos": 4,
+            "empatia": 5,
+            "expresividad": 3
+        },
+        "respeto_propiedad": {
+            "cuidado_mobiliario": 5
+        }
+    }
+
+    mock_real_companero1 = {
+        "higiene_y_orden": {
+            "frecuencia_limpieza": 3,
+            "gestion_vajilla": 4,
+            "zonas_comunes": 4
+        },
+        "economia_y_responsabilidad": {
+            "puntualidad_pagos": 5,
+            "gastos_compartidos": 5,
+            "consumo_responsable": 5
+        },
+        "ruido_y_horarios": {
+            "respeto_descanso": 4
+        },
+        "visitas": {
+            "frecuencia_visitas": 4,
+            "respeto_zonas_comunes": 4
+        },
+        "comunicacion": {
+            "resolucion_conflictos": 4,
+            "empatia": 5,
+            "expresividad": 4
+        },
+        "respeto_propiedad": {
+            "cuidado_mobiliario": 5
+        }
+    }
+
     # 3. Instanciamos el motor y disparamos la evaluación
-    motor = MotorRecomendacion(penalizacion_unidades=25)
-    nota_final = motor.calcular_score_vivienda(mock_usuario, mock_piso, texto_usuario, texto_anuncio)
+    # motor = MotorRecomendacion(penalizacion_unidades=25)
+    # nota_final = motor.calcular_score_vivienda(mock_usuario, mock_piso, texto_usuario, texto_anuncio)
+
+    motor = MotorCompaneros()
+    nota_final = motor.scoring_usuarios(mock_pref_usuario2, mock_real_usuario2, mock_pref_companero1, mock_real_companero1)
     
     print(f"✅ Resultado de la evaluación cruzada: {nota_final}% de afinidad.")

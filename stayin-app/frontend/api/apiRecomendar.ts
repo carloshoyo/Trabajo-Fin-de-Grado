@@ -13,9 +13,16 @@ interface ViviendaRecomenda {
     vivienda_data: any;
 }
 
-export const obtenerRecomendaciones = async (idInquilino: number): Promise<ViviendaRecomenda[]> => {
+export interface Companero {
+    id_inquilino: number;
+    username: string;
+    nombre: string;
+    score_afinidad: number;
+}
+
+export const obtenerRecomendacionesAnuncios = async (idInquilino: number): Promise<ViviendaRecomenda[]> => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 500);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     try {
         const respuesta = await fetch(`${API_URL}/recomendar/anuncios`, {
             method: 'POST',
@@ -38,7 +45,42 @@ export const obtenerRecomendaciones = async (idInquilino: number): Promise<Vivie
     } catch(error: any) {
         clearTimeout(timeoutId);
         if(error === 'AbortError') {
-            console.warn('El motor de recomendaciones tardó demasiado. Fallback activado.');
+            console.warn('El motor de recomendaciones de anuncios tardó demasiado. Fallback activado.');
+        } else {
+            console.error('Error: ', error);
+        }
+        throw error;
+    }
+}
+
+export const obtenerRecomendacionesCompaneros = async(idInquilino: number): Promise<Companero[]> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+        const respuesta = await fetch(`${API_URL}/recomendar/companeros`, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id_inquilino: idInquilino
+            }),
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!respuesta.ok) {
+            console.warn('No se han recibido compañeros de la API')
+            throw respuesta.statusText
+        }
+        const data = await respuesta.json();
+        return data; // data ya es un array ordenado por score_afinidad
+    } catch(error: any) {
+        clearTimeout(timeoutId);
+        if(error === 'AbortError') {
+            console.warn('El motor de recomendaciones de comapñeros tardó demasiado. Fallback activado.');
         } else {
             console.error('Error: ', error);
         }

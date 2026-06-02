@@ -8,8 +8,10 @@ import * as SecureStore from 'expo-secure-store';
 import { API_CONFIG } from "@/constants/config";
 import { useLogin } from "@/context/LoginContext";
 import { useFocusEffect } from "expo-router";
-import { obtenerRecomendaciones, registrarInteraccion } from "@/api/apiRecomendar"
+import { obtenerRecomendacionesAnuncios, obtenerRecomendacionesCompaneros, registrarInteraccion, Companero } from "@/api/apiRecomendar"
 import { FlatList } from "react-native";
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 
 interface Anuncio {
     titulo: string;
@@ -28,9 +30,12 @@ export default function HomeInquilino() {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+    const [companeros, setCompaneros] = useState<Companero[]>([]);
     const [valoracionesPendientes, setValoracionesPendientes] = useState([]);
     const { loginData, logout } = useLogin();
-    const [ isLoading, setIsLoading ] = useState(false);
+    const [ isLoadingAnuncios, setIsLoadingAnuncios ] = useState(false);
+    const [ isLoadingCompaneros, setIsLoadingCompaneros ] = useState(false);
+    const [verMasAnuncios, setVerMasAnuncios] = useState(false);
     const [ error, setError ] = useState<string | null>(null);
     const getAnuncios = async () => {
         try {
@@ -65,8 +70,9 @@ export default function HomeInquilino() {
 
     useFocusEffect(
         useCallback(() => {
-            const cargarRecomendaciones = async () => {
-                setIsLoading(true)
+            const cargarAnuncios = async () => {
+                setIsLoadingAnuncios(true)
+                setIsLoadingCompaneros(true)
                 setError(null)                
                 try {
                     const strIdUsuario = await SecureStore.getItemAsync('userId');
@@ -75,9 +81,9 @@ export default function HomeInquilino() {
                     }
 
                     const idUsuario = parseInt(strIdUsuario, 10)
-                    const datos = await obtenerRecomendaciones(idUsuario)
-
-                    const anunciosFormateados = datos.map((item) => {
+                    const datosAnuncios = await obtenerRecomendacionesAnuncios(idUsuario)
+                    
+                    const anunciosFormateados = datosAnuncios.map((item) => {
                         return {
                             ...item.vivienda_data,
                             score_afinidad: item.score_afinidad
@@ -91,12 +97,33 @@ export default function HomeInquilino() {
                     console.log("Cargando anuncios de forma tradicional.");
                     getAnuncios();
                 } finally {
-                    setIsLoading(false)
+                    setIsLoadingAnuncios(false)
+                }
+            };
+
+            const cargarCompaneros = async () => {
+                setIsLoadingCompaneros(true);
+                try {
+                    // Obtenemos el ID guardado en SecureStore
+                    const strIdUsuario = await SecureStore.getItemAsync('userId');
+                    if (!strIdUsuario) return;
+
+                    const idUsuario = parseInt(strIdUsuario, 10)
+
+                    const datosCompaneros = await obtenerRecomendacionesCompaneros(idUsuario)
+
+                    setCompaneros(datosCompaneros)
+                    
+                } catch(error) {
+                    console.error("Error cargando compañeros recomendados: ", error);
+                } finally {
+                    setIsLoadingCompaneros(false);
                 }
             };
 
             if(anuncios) {
-                cargarRecomendaciones();
+                cargarAnuncios();
+                cargarCompaneros();
             } else {
                 getAnuncios();
             }
@@ -110,7 +137,7 @@ export default function HomeInquilino() {
                 contentContainerStyle={[styles.scrollContent, {
                     backgroundColor: currentColors.background
                 }]}
-                data={anuncios}
+                data={verMasAnuncios ? anuncios : anuncios.slice(0, 1)}
                     keyExtractor={(item) => item.id_anuncio.toString()}
                     renderItem={( { item }) => (
                         <FlatCard 
@@ -131,11 +158,12 @@ export default function HomeInquilino() {
                     <View>
                         <Text style={[styles.title, {
                             color: currentColors.formTextColor,
-                            marginTop: 70
+                            marginTop: 70,
+                            alignSelf: 'center'
                         }]}>
-                            Viviendas que te podrían interesar
+                            Recomendados para ti
                         </Text>
-                        {isLoading ? (
+                        {isLoadingAnuncios ? (
                         <ActivityIndicator/>
                         ) : (
                             <></>
@@ -144,20 +172,76 @@ export default function HomeInquilino() {
                 }
                 ListFooterComponent={
                     <View style={[styles.footerContainer]}>
-                        <Text style={[styles.title, {
-                            color: currentColors.formTextColor
+                        {/* <Text style={[styles.title, {
+                            color: currentColors.formTextColor,
+                            alignSelf: 'center'
                         }]}>
-                            Posibles futuros compañeros
-                        </Text>
-                        <ScrollView
-                            horizontal={true}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={[styles.carrusel]}
+                            Usuarios
+                        </Text> */}
+                        <Pressable 
+                            onPress={() => setVerMasAnuncios(!verMasAnuncios)}
+                            style={[styles.verMasPressAnuncios]}
                         >
-                            <UserCard name="Carlos Hoyo" descripcion="Granada"></UserCard>
-                            <UserCard name="Carlos Hoyo" descripcion="Granada"></UserCard>
-                            <UserCard name="Carlos Hoyo" descripcion="Granada"></UserCard>
-                        </ScrollView>
+                            {!verMasAnuncios ? (
+                                <View style={{alignItems: 'center', gap: 5}}>
+                                    <Text style={[ {
+                                        color: currentColors.flatCardBorderColor,
+                                        // textDecorationLine: 'underline'
+                                    }]}>
+                                        Ver más
+                                    </Text>
+                                    <SimpleLineIcons name="arrow-down" size={12} color={currentColors.flatCardBorderColor} />
+                                </View>
+                            ) : (
+                                <View style={{alignItems: 'center', gap: 5}}>
+                                    <SimpleLineIcons name="arrow-up" size={12} color={currentColors.flatCardBorderColor} />
+                                    <Text style={[ {
+                                        color: currentColors.flatCardBorderColor,
+                                        // textDecorationLine: 'underline'
+                                    }]}>
+                                        Ver menos
+                                    </Text>
+                                </View>
+                            )}
+                                                        
+                        </Pressable>
+                        { isLoadingCompaneros ? (
+                            <ActivityIndicator />
+                        ) : (
+                            <ScrollView
+                                horizontal={true}
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={[styles.carrusel]}
+                            >
+                                {companeros.slice(0, 3).map((comp) => (
+                                    <UserCard
+                                        key={comp.id_inquilino}
+                                        name={comp.nombre}
+                                        scoring={comp.score_afinidad}
+
+                                    />
+                                ))}
+                                {companeros.length === 0 && (
+                                    <Text style={{ color: currentColors.flatCardBorderColor, padding: 20 }}>
+                                        No hay compañeros compatibles con tu zona aún
+                                    </Text>
+                                )}
+                                <UserCard name="Carlos Hoyo" scoring={89}></UserCard>
+                                <UserCard name="Carlos Hoyo" scoring={69}></UserCard>
+                                <UserCard name="Carlos Hoyo" scoring={49}></UserCard>
+                            </ScrollView>
+                        )}                        
+                        <Pressable style={[styles.verMasPressCompaneros]}>
+                            <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
+                                <Text style={[{
+                                    color: currentColors.flatCardBorderColor,
+                                    // textDecorationLine: 'underline'
+                                }]}>
+                                    Ver todos
+                                </Text>
+                                <SimpleLineIcons name="arrow-right" size={12} color={currentColors.flatCardBorderColor} />
+                            </View>
+                        </Pressable>
                         <Pressable 
                             style={[styles.logout, {
                                 backgroundColor: currentColors.postAdContainerColor
@@ -199,9 +283,13 @@ const styles = StyleSheet.create({
         position: 'relative',
         paddingBottom: 120
     },
+    head: {
+        fontSize: 28,
+        fontWeight: '600'
+    },
     title: {
         fontSize: 24,
-        fontWeight: '400'
+        fontWeight: '600'
     },
     container: {
         flex: 1,
@@ -209,7 +297,8 @@ const styles = StyleSheet.create({
         height: '100%'
     },
     carrusel: {
-        gap: 15
+        gap: 15,
+        alignItems: 'center'
     },
     logout: {
         width: '100%',
@@ -219,5 +308,15 @@ const styles = StyleSheet.create({
     },
     footerContainer: {
         gap: 20
+    },
+    verMasPressAnuncios: {
+        width: '100%',
+        alignItems: 'center',
+        paddingHorizontal: 20
+    },
+    verMasPressCompaneros: {
+        width: '100%',
+        alignItems: 'flex-end',
+        paddingHorizontal: 20
     }
 })

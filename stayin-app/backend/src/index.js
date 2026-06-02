@@ -316,7 +316,7 @@ app.post('/api/home/inquilino', verificarToken, async (req, res) => {
 
         const id_inquilino = req.user.id_usuario; //Viene del token del user
 
-        const resultado = await client.query(`
+        const resultadoAnuncios = await client.query(`
                 SELECT 
                     a.*, 
                     v.*,
@@ -333,6 +333,21 @@ app.post('/api/home/inquilino', verificarToken, async (req, res) => {
             `,
                 [id_inquilino]
         );
+
+        // const resultadoCompaneros = await client.query(`
+        //         SELECT
+        //             i.descripcion,
+        //             u.nombre, u.apellidos, u.username, u.img_perfil,
+        //             p.zona
+        //         FROM Usuarios u 
+        //         JOIN Inquilino i ON u.id_usuario = i.id_inquilino
+        //         JOIN Preferencias_Inquilinos p ON p.id_inquilino = u.id_usuario
+        //         WHERE u.id_usuario != $1 && zona && $2
+
+
+        //     `,
+        //     [id_inquilino, zona]
+        // );
 
         const respuesta_id_estancia = await client.query(`
             SELECT e.id_estancia 
@@ -358,7 +373,7 @@ app.post('/api/home/inquilino', verificarToken, async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Hay anuncios publicados',
-            adData: resultado.rows,
+            adData: resultadoAnuncios.rows,
             valoraciones_pendientes: valoraciones_pendientes
         });
         

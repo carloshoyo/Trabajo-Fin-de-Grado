@@ -4,7 +4,7 @@ import { Colors } from "@/constants/theme";
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 
-export function UserCard({name, descripcion, img}: {name: string, descripcion: string, img?: ImageSourcePropType}) {
+export function UserCard({name, scoring, img}: {name: string, scoring: number, img?: ImageSourcePropType}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     return (
@@ -13,7 +13,7 @@ export function UserCard({name, descripcion, img}: {name: string, descripcion: s
             borderColor: currentColors.flatCardBorderColor
         }]}>
             <View style={[styles.userImgContainer, {
-                backgroundColor: currentColors.formBorderColor
+                backgroundColor: currentColors.formTextArea
             }]}>
                 {img ? (
                     <Image
@@ -21,19 +21,32 @@ export function UserCard({name, descripcion, img}: {name: string, descripcion: s
                         source={img}
                     />
                 ) : (
-                    <FontAwesome5 name="user-circle" size={96} color={currentColors.formButtonColor}/>
+                    <FontAwesome5 name="user-circle" size={96} color={currentColors.formBorderColor}/>
                 )}
             </View>
             <View style={[styles.textContainer]}>
+                
+                <View style={[styles.scoringContainer, {
+                    backgroundColor: scoring >= 80 
+                            ? currentColors.highScoringColorContainer
+                                : scoring < 80 && scoring >= 50 
+                                    ? currentColors.midScoringColorContainer
+                                    : currentColors.lowScoringColorContainer
+                }]}>
+                    <Text style={{
+                        color: scoring >= 80 
+                            ? currentColors.highScoringColorText 
+                                : scoring < 80 && scoring >= 50 
+                                    ? currentColors.midScoringColorText
+                                    : currentColors.lowScoringColorText
+                    }}>
+                        {`${scoring}%`}
+                    </Text>
+                </View>
                 <Text style={[styles.nameStyle, {
                     color: currentColors.formTextColor
                 }]}>
                     {name}
-                </Text>
-                <Text style={{
-                    color: currentColors.formTextColor
-                }}>
-                    {descripcion}
                 </Text>
             </View>
             <TouchableOpacity style={[styles.contactButton, {
@@ -68,10 +81,15 @@ const styles = StyleSheet.create({
         borderRadius: 5
     },
     textContainer: {
-        gap: 1,
+        gap: 5,
         alignItems: 'center'
     },
     nameStyle: {
         fontWeight: '600'
+    },
+    scoringContainer: {
+        padding: 2,
+        paddingHorizontal: 4,
+        borderRadius: 7
     }
 })

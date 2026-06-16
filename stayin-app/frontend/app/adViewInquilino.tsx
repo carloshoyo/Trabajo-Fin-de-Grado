@@ -8,6 +8,7 @@ import { useAd } from "@/context/PostAdContext";
 import { API_CONFIG } from "@/constants/config";
 import * as SecureStore from 'expo-secure-store';
 import { useLogin } from "@/context/LoginContext";
+import { MapaPrueba } from "@/components/my-components/MapaPrueba";
 
 export default function AdViewInquilino() {
     const theme = useColorScheme() ?? 'light';
@@ -168,7 +169,13 @@ export default function AdViewInquilino() {
                         }]}>
                             Valoraciones
                         </Text>
-                    </View>                    
+                        <Text style={[styles.descriptionTitle, {
+                            color: currentColors.formTextColor
+                        }]}>
+                            Ubicación del inmueble
+                        </Text>
+                        <MapaPrueba/>
+                    </View>                  
                 </View>
                 <Pressable 
                     style={[styles.solicitarButton, {

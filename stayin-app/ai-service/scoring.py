@@ -251,7 +251,7 @@ class MotorCompaneros:
 
         return afinidad
     
-    def scoring_usuarios(self, pref_a: dict, real_a: dict, pref_b: dict, real_b: dict) -> float:
+    def scoring_usuarios(self, pref_a: dict, real_a: dict, pref_b: dict, real_b: dict, score_nlp: float = 50.0) -> float:
         vector_pref_a = self.aplanar_vector(pref_a)
         vector_pref_b = self.aplanar_vector(pref_b)
         vector_real_a = self.aplanar_vector(real_a)
@@ -263,10 +263,15 @@ class MotorCompaneros:
         if afinidad_a_b == 0 or afinidad_b_a == 0:
             return 0.0
 
-        # Cálculo de la edia armónica para el scroe final de los dos usuarios
-        scoring = 2 / ((1 / afinidad_a_b) + (1 / afinidad_b_a))
+        # Cálculo de la media armónica (Score Matemático)
+        scoring_matematico = 2 / ((1 / afinidad_a_b) + (1 / afinidad_b_a))
 
-        return round (scoring, 2)
+        # Combinación con NLP
+        alfa = 0.8
+        beta = 0.2
+        score_final = (scoring_matematico * alfa) + (score_nlp * beta)
+
+        return round(score_final, 2)
         
 
 # Variable para almacenar el peso de cada modulo de preferencias y, a su vez, de todos los aspectos

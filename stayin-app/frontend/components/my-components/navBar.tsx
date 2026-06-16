@@ -8,7 +8,7 @@ import { Href, RelativePathString, useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { useLogin } from "@/context/LoginContext";
 
-export function NavBar({active, solicitudes, valoraciones, home}: {active: string, solicitudes?: number, valoraciones: number, home: Href}) {
+export function NavBar({active, solicitudes, valoraciones}: {active: string, solicitudes: number, valoraciones: number, home: Href}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const router = useRouter();
@@ -35,8 +35,18 @@ export function NavBar({active, solicitudes, valoraciones, home}: {active: strin
                 <Pressable style={[styles.pressables]} onPress={() => navigateHome()}>
                     <Ionicons name={active==='home' ? "home" : "home-outline"} size={24} color={currentColors.formButtonColor}/>
                 </Pressable>
-                <Pressable style={[styles.pressables]}>
-                    <MaterialIcons name="search" size={24} color={currentColors.formButtonColor}/>
+                <Pressable 
+                    style={[styles.pressables]} 
+                    onPress={() => (router.replace({
+                        pathname: '/searchScreen',
+                        params: {
+                            valoraciones: valoraciones,
+                            solicitudes: solicitudes
+                        }
+                    }
+                    ))}
+                >
+                    <Ionicons name={active==='search' ? 'search' : 'search-outline'} size={24} color={currentColors.formButtonColor}/>
                 </Pressable>
                 <Pressable style={[styles.pressables]}>
                     <Ionicons name="chatbox-outline" size={24} color={currentColors.formButtonColor}/>
@@ -56,7 +66,7 @@ export function NavBar({active, solicitudes, valoraciones, home}: {active: strin
                     ) : (
                         <></>
                     )}
-                    <Pressable style={[styles.pressables]} onPress={() => moveTo('/screenSocial')}>
+                    <Pressable style={[styles.pressables]} onPress={() => router.replace('/screenSocial')}>
                         <MaterialCommunityIcons name={active === 'social' ? "cards-heart" : "cards-heart-outline"} size={24} color={currentColors.formButtonColor}/>
                     </Pressable>
                 </View>

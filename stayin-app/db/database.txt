@@ -1,0 +1,232 @@
+create table public.usuarios
+(
+    id_usuario serial
+        primary key,
+    username   varchar(20)             not null
+        unique,
+    email      varchar(255)            not null
+        unique,
+    dni        varchar(9)
+        unique,
+    nombre     varchar(50)             not null,
+    apellidos  varchar(50)             not null,
+    rol        varchar(15)             not null
+        constraint usuarios_rol_check
+            check ((rol)::text = ANY
+                   ((ARRAY ['Inquilino'::character varying, 'Casero'::character varying, 'Administrador'::character varying])::text[])),
+    passwd     varchar(255)            not null,
+    f_nac      date                    not null,
+    sexo       varchar(15)             not null,
+    verificado boolean   default false not null,
+    numero_tlf varchar(9)
+        unique,
+    f_registro timestamp default CURRENT_TIMESTAMP,
+    img_perfil varchar(100)
+);
+
+alter table public.usuarios
+    owner to postgres;
+
+create table public.inquilino
+(
+    id_inquilino    integer                                          not null
+        primary key
+        references public.usuarios
+            on delete cascade,
+    estudiante      boolean     default false                        not null,
+    fuma            boolean     default false                        not null,
+    mascota         boolean     default false                        not null,
+    descripcion     varchar(500),
+    estado          varchar(50) default 'Privado'::character varying not null
+        constraint inquilino_estado_check
+            check ((estado)::text = ANY
+                   ((ARRAY ['Vivienda'::character varying, 'Compañero'::character varying, 'Privado'::character varying])::text[])),
+    vector_realidad jsonb       default '{}'::jsonb
+);
+
+alter table public.inquilino
+    owner to postgres;
+
+create table public.caseros
+(
+    id_casero integer not null
+        primary key
+        references public.usuarios
+            on delete cascade,
+    estado    boolean default true
+);
+
+alter table public.caseros
+    owner to postgres;
+
+create table public.viviendas
+(
+    id_vivienda    serial
+        primary key,
+    id_casero      integer
+        references public.caseros
+            on delete cascade,
+    area           integer                                       not null,
+    direccion      varchar(50)                                   not null,
+    max_inquilinos integer                                       not null,
+    cpostal        varchar(5) default '00000'::character varying not null,
+    numero         integer    default 1                          not null,
+    puerta         varchar(4) default 1
+);
+
+alter table public.viviendas
+    owner to postgres;
+
+create table public.anuncios
+(
+    id_anuncio      serial
+        primary key,
+    id_vivienda     integer
+        references public.viviendas
+            on delete cascade,
+    id_casero       integer
+        references public.caseros
+            on delete cascade,
+    f_publicacion   timestamp default CURRENT_TIMESTAMP,
+    titulo          varchar(500)  not null,
+    img             varchar(1000) not null,
+    precio          integer       not null,
+    multimedia      jsonb     default '[]'::jsonb,
+    descripcion     text,
+    caracteristicas jsonb     default '{}'::jsonb
+);
+
+alter table public.anuncios
+    owner to postgres;
+
+create table public.solicitudes
+(
+    id_solicitud serial
+        primary key,
+    id_anuncio   integer
+        references public.anuncios
+            on delete cascade,
+    id_inquilino integer
+        references public.inquilino
+            on delete cascade,
+    f_solicitud  timestamp   default CURRENT_TIMESTAMP,
+    estado       varchar(50) default 'Pendiente'::character varying not null
+        constraint solicitudes_estado_check
+            check ((estado)::text = ANY
+                   ((ARRAY ['Aceptada'::character varying, 'Rechazada'::character varying, 'Pendiente'::character varying])::text[])),
+    unique (id_anuncio, id_inquilino)
+);
+
+alter table public.solicitudes
+    owner to postgres;
+
+create table public.estancias
+(
+    id_estancia       serial
+        primary key,
+    id_inquilino      integer                        not null
+        references public.inquilino
+            on delete cascade,
+    id_vivienda       integer                        not null
+        references public.viviendas
+            on delete cascade,
+    f_inicio_estancia date default CURRENT_TIMESTAMP not null,
+    f_fin_estancia    date
+);
+
+alter table public.estancias
+    owner to postgres;
+
+create table public.valoraciones
+(
+    id_valoracion   serial
+        primary key,
+    id_estancia     integer                               not null
+        references public.estancias
+            on delete cascade,
+    id_valorador    integer                               not null
+        references public.usuarios
+            on delete cascade,
+    id_valorado     integer                               not null
+        references public.usuarios
+            on delete cascade,
+    comentario      text,
+    f_valoracion    date        default CURRENT_TIMESTAMP not null,
+    tipo_valoracion varchar(20) default 'usuario'::character varying
+        constraint valoraciones_tipo_valoracion_check
+            check ((tipo_valoracion)::text = ANY
+                   ((ARRAY ['usuario'::character varying, 'inmueble'::character varying])::text[]))
+);
+
+alter table public.valoraciones
+    owner to postgres;
+
+create table public.criterios_valoracion
+(
+    id_criterio   serial
+        primary key,
+    categoria     varchar(50) not null,
+    pregunta      text        not null,
+    tipo_criterio varchar(20) default 'usuario'::character varying
+        constraint criterios_valoracion_tipo_criterio_check
+            check ((tipo_criterio)::text = ANY
+                   ((ARRAY ['usuario'::character varying, 'inmueble'::character varying])::text[])),
+    pregunta_test text,
+    clave_json    varchar(50)
+);
+
+alter table public.criterios_valoracion
+    owner to postgres;
+
+create table public.puntuacion_criterios
+(
+    id_criterio   integer not null
+        references public.criterios_valoracion
+            on delete cascade,
+    id_valoracion integer not null
+        references public.valoraciones
+            on delete cascade,
+    puntuacion    integer not null
+        constraint puntuacion_criterios_puntuacion_check
+            check ((puntuacion >= 1) AND (puntuacion <= 5)),
+    primary key (id_criterio, id_valoracion)
+);
+
+alter table public.puntuacion_criterios
+    owner to postgres;
+
+create table public.preferencias_inquilinos
+(
+    id_inquilino    integer                                           not null
+        primary key
+        references public.inquilino
+            on delete cascade,
+    presupuesto_max integer                                           not null,
+    zona            varchar(5)[] default '{}'::character varying(5)[] not null,
+    mascota         boolean                                           not null,
+    preferencias    jsonb        default '{}'::jsonb,
+    perfil_social   jsonb        default '{}'::jsonb,
+    ciudad          varchar(50)
+);
+
+alter table public.preferencias_inquilinos
+    owner to postgres;
+
+create table public.interacciones_anuncios
+(
+    id_interaccion   serial
+        primary key,
+    id_inquilino     integer                                           not null
+        references public.inquilino
+            on delete cascade,
+    id_anuncio       integer                                           not null
+        references public.anuncios
+            on delete cascade,
+    f_interaccion    timestamp   default CURRENT_TIMESTAMP,
+    peso_interaccion integer                                           not null,
+    tipo_interaccion varchar(50) default 'favorito'::character varying not null
+);
+
+alter table public.interacciones_anuncios
+    owner to postgres;
+

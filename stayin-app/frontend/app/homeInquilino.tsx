@@ -12,6 +12,7 @@ import { obtenerRecomendacionesAnuncios, obtenerRecomendacionesCompaneros, regis
 import { FlatList } from "react-native";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
+import { PopUp } from "@/components/my-components/popUp";
 
 interface Anuncio {
     titulo: string;
@@ -37,6 +38,7 @@ export default function HomeInquilino() {
     const [ isLoadingCompaneros, setIsLoadingCompaneros ] = useState(false);
     const [verMasAnuncios, setVerMasAnuncios] = useState(false);
     const [ error, setError ] = useState<string | null>(null);
+    const [perfilUsuario, setPerfilUsuario] = useState(true);
     const getAnuncios = async () => {
         try {
                     const token = await SecureStore.getItemAsync('userToken');
@@ -55,6 +57,7 @@ export default function HomeInquilino() {
                     if(resultado.success == true) {
                         setAnuncios(resultado.adData);
                         setValoracionesPendientes(resultado.valoraciones_pendientes);
+                        setPerfilUsuario(resultado.perfil_completado)
                     } else {
                         console.warn("Petición rechazada por el servidor:", resultado.message);
                         
@@ -90,12 +93,14 @@ export default function HomeInquilino() {
                         };
                     });
 
-                    setAnuncios(anunciosFormateados);
+                    if(anunciosFormateados.length > 0) {
+                        setAnuncios(anunciosFormateados);
+                    }
+
                 } catch(error) {
                     setError("No se pudieron cargar las recomendaciones");
                     console.error("Error: ", error);
                     console.log("Cargando anuncios de forma tradicional.");
-                    getAnuncios();
                 } finally {
                     setIsLoadingAnuncios(false)
                 }
@@ -121,12 +126,14 @@ export default function HomeInquilino() {
                 }
             };
 
-            if(anuncios) {
+            const inicializarPantalla = async () => {
+                await getAnuncios();
+
                 cargarAnuncios();
                 cargarCompaneros();
-            } else {
-                getAnuncios();
-            }
+            };
+
+            inicializarPantalla();
 
     }, []));
     return (
@@ -261,7 +268,16 @@ export default function HomeInquilino() {
                 active="home"
                 valoraciones={valoracionesPendientes.length}
                 home={'/homeInquilino'}
+                solicitudes={0}
             />
+            {perfilUsuario ? (
+                <PopUp
+                    title="¡Completa tu perfil!"
+                    text="Ayúdanos a conocer tus preferencias"
+                />
+            ) : (
+                <></>
+            )}
         </View>
     )
 }

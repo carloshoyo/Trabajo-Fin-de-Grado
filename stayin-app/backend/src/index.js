@@ -32,6 +32,21 @@ const verificarToken = (req, res, next) => {
     });
 };
 
+// module.exports = {verificarToken};
+
+// middleware/admin.js
+const verificarAdmin = (req, res, next) => {
+    if (!req.user || req.user.rol !== 'Administrador') {
+        return res.status(403).json({ 
+            error: 'Prohibido. Se requieren privilegios de administrador.' 
+        });
+    }
+    
+    next();
+};
+
+// module.exports = { verificarAdmin };
+
 app.get('/', (req, res) => {
     res.send('El servidor de StayIn está funcionando.');
 });
@@ -45,12 +60,17 @@ app.post('/api/register', async (req, res) => {
     console.log('Nuevo registro en la aplicación:');
     console.log(userData);
 
+    if(userData.rol === 'administrador' || userData.rol === 'Administrador') {
+        return res.status(403).json({
+            success: false,
+            message: 'Operación no permitida. No se pueden registrar administradores desde esta vía.'
+        });
+    }
+
     if(userData.rol === 'inquilino') {
         userData.rol = 'Inquilino';
     } else if(userData.rol === 'casero') {
         userData.rol = 'Casero';
-    } else if(userData.rol === 'administrador') {
-        userData.rol = 'Administrador';
     }
 
     // 2. Pedimos un trabajador a la base de datos
@@ -314,7 +334,7 @@ app.post('/api/home/inquilino', verificarToken, async (req, res) => {
 
     try {
 
-        const id_inquilino = req.user.id_usuario; //Viene del token del user
+        const id_inquilino = req.user.id_usuario;
 
         const resultadoAnuncios = await client.query(`
                 SELECT 
@@ -334,20 +354,20 @@ app.post('/api/home/inquilino', verificarToken, async (req, res) => {
                 [id_inquilino]
         );
 
-        // const resultadoCompaneros = await client.query(`
-        //         SELECT
-        //             i.descripcion,
-        //             u.nombre, u.apellidos, u.username, u.img_perfil,
-        //             p.zona
-        //         FROM Usuarios u 
-        //         JOIN Inquilino i ON u.id_usuario = i.id_inquilino
-        //         JOIN Preferencias_Inquilinos p ON p.id_inquilino = u.id_usuario
-        //         WHERE u.id_usuario != $1 && zona && $2
+        const perfil_raw = await client.query(`
+                SELECT perfil_social
+                FROM Preferencias_Inquilinos
+                WHERE id_inquilino = $1;
+            `,
+                [id_inquilino]
+        );
 
-
-        //     `,
-        //     [id_inquilino, zona]
-        // );
+        let perfilCompletado = false;
+        if (perfil_raw.rows.length > 0 && perfil_raw.rows[0].perfil_social) {
+            if (Object.keys(perfil_raw.rows[0].perfil_social).length > 0) {
+                perfilCompletado = true;
+            }
+        }
 
         const respuesta_id_estancia = await client.query(`
             SELECT e.id_estancia 
@@ -357,16 +377,17 @@ app.post('/api/home/inquilino', verificarToken, async (req, res) => {
                 WHERE 
                     (e.id_inquilino = $1 OR v.id_casero = $1) 
                     AND e.f_fin_estancia IS NOT NULL
-                    AND val.id_valoracion IS NULL;`, [id_casero]);
+                    AND val.id_valoracion IS NULL;`, [id_inquilino]);
 
         const valoraciones_pendientes = respuesta_id_estancia.rows.map(fila => fila.id_estancia);
 
-        if(resultado.rows.length === 0) {
+        if(resultadoAnuncios.rows.length === 0) {
             return res.status(200).json({
                 success: true,
                 message: 'No hay anuncios publicados',
                 adData: [],
-                valoraciones_pendientes: valoraciones_pendientes
+                valoraciones_pendientes: valoraciones_pendientes,
+                perfil_completado: perfilCompletado
             });
         }
         
@@ -374,7 +395,8 @@ app.post('/api/home/inquilino', verificarToken, async (req, res) => {
             success: true,
             message: 'Hay anuncios publicados',
             adData: resultadoAnuncios.rows,
-            valoraciones_pendientes: valoraciones_pendientes
+            valoraciones_pendientes: valoraciones_pendientes,
+            perfil_completado: perfilCompletado
         });
         
         
@@ -684,7 +706,330 @@ app.post('/api/interaccion/eliminarFavoritos', verificarToken, async (req, res) 
             message: 'Error al intentar quitar  de favoritos'
         })
     }
-})
+});
+
+app.post('/api/valoraciones/test/guardar', verificarToken, async (req, res) => {
+    const id_inquilino = req.user.id_usuario; 
+    const perfil_social = req.body.perfil_social;
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN;');
+
+        await client.query(`
+            INSERT INTO Preferencias_Inquilinos (id_inquilino, perfil_social, presupuesto_max, mascota, ciudad)
+            VALUES ($1, $2, 0, false, '')
+            ON CONFLICT (id_inquilino) DO UPDATE SET perfil_social = EXCLUDED.perfil_social;
+        `, [id_inquilino, perfil_social]);
+
+        // SOLUCIÓN AL ARRANQUE EN FRÍO: Guardamos la realidad (Lo que el usuario OFRECE)
+        // Solo lo hacemos si su vector_realidad está vacío. Si ya tiene valoraciones reales, 
+        // no las sobreescribimos.
+        await client.query(`
+            UPDATE Inquilino 
+            SET vector_realidad = $1 
+            WHERE id_inquilino = $2 
+            AND (vector_realidad IS NULL OR vector_realidad = '{}'::jsonb);
+        `, [perfil_social, id_inquilino]);
+
+        await client.query('COMMIT;');
+
+        res.status(200).json({
+            success: true,
+            message: 'Perfil de convivencia actualizado y vector de realidad inicializado'
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK;');
+        console.error('Error al guardar el test de personalidad:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno al guardar el perfil'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.get('/api/admin/usuarios', verificarToken, verificarAdmin, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        // Traemos todos los usuarios ordenados por los más recientes
+        const resultado = await client.query(`
+            SELECT id_usuario, username, email, nombre, apellidos, rol 
+            FROM Usuarios 
+            ORDER BY id_usuario DESC
+        `);
+        
+        res.status(200).json({
+            success: true,
+            usuarios: resultado.rows
+        });
+    } catch(error) {
+        console.error('Error al obtener la lista de usuarios:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al cargar los usuarios'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.get('/api/admin/estadisticas', verificarToken, verificarAdmin, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        // Ejecutamos las consultas en paralelo para mayor rendimiento
+        const [resUsuarios, resAnuncios, resInquilinos, resCaseros] = await Promise.all([
+            client.query('SELECT COUNT(*) FROM Usuarios'),
+            client.query('SELECT COUNT(*) FROM Anuncios'),
+            client.query('SELECT COUNT(*) FROM Inquilino'),
+            client.query('SELECT COUNT(*) FROM Caseros')
+        ]);
+
+        res.status(200).json({
+            success: true,
+            stats: {
+                usuarios: parseInt(resUsuarios.rows[0].count),
+                anuncios: parseInt(resAnuncios.rows[0].count),
+                inquilinos: parseInt(resInquilinos.rows[0].count),
+                caseros: parseInt(resCaseros.rows[0].count)
+            }
+        });
+    } catch(error) {
+        console.error('Error al obtener estadísticas:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al cargar las estadísticas'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.get('/api/admin/anuncios', verificarToken, verificarAdmin, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const resultado = await client.query(`
+            SELECT 
+                a.id_anuncio, 
+                a.titulo, 
+                a.precio, 
+                v.direccion, 
+                v.cpostal,
+                u.username AS casero_username, 
+                u.email AS casero_email
+            FROM Anuncios a
+            JOIN Viviendas v ON a.id_vivienda = v.id_vivienda
+            JOIN Usuarios u ON a.id_casero = u.id_usuario
+            ORDER BY a.id_anuncio DESC
+        `);
+        
+        res.status(200).json({
+            success: true,
+            anuncios: resultado.rows
+        });
+    } catch(error) {
+        console.error('Error al obtener la lista de anuncios:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al cargar los anuncios'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.post('/api/borrar/usuario', verificarToken, verificarAdmin, async(req, res) => {
+    const client = await pool.connect();
+
+    try {
+        // Unimos 3 tablas para tener la información completa del anuncio
+        const resultado = await client.query(`
+            DELETE FROM Usuarios WHERE id_usuario = $1
+            `, [req.body.id_usuario],
+        );
+        
+        res.status(200).json({
+            success: true,
+        });
+    } catch(error) {
+        console.error('Error al obtener la lista de anuncios:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar al usuario'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.post('/api/borrar/anuncio', verificarToken, verificarAdmin, async(req, res) => {
+    const client = await pool.connect();
+
+    try {
+        // Unimos 3 tablas para tener la información completa del anuncio
+        const resultado = await client.query(`
+            DELETE FROM Anuncios WHERE id_anuncio = $1
+            `, [req.body.id_anuncio],
+        );
+        
+        res.status(200).json({
+            success: true,
+        });
+    } catch(error) {
+        console.error('Error al obtener la lista de anuncios:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al eliminar al usuario'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.get('/api/admin/valoraciones', verificarToken, verificarAdmin, async(req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const resultado = await client.query(`
+                SELECT 
+                    v.id_valoracion,
+                    v.comentario,
+                    v.id_estancia,
+                    v.oculto,
+                    autor.username AS autor_username,
+                    autor.rol AS autor_rol,
+                    destinatario.username AS destinatario_username,
+                    destinatario.rol AS destinatario_rol
+                FROM Valoraciones v
+                JOIN Usuarios autor ON v.id_valorador = autor.id_usuario
+                JOIN Usuarios destinatario ON v.id_valorado = destinatario.id_usuario
+                ORDER BY v.id_valoracion DESC;
+            `
+        );
+
+        const valoraciones = resultado.rows;
+
+        res.status(200).json({
+            success: true,
+            message: 'Valoraciones obtenidas correctamente',
+            valoraciones: valoraciones
+        });
+
+    } catch(error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener las valoraciones de la aplicación'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.put('/api/admin/valoraciones/ocultar', verificarToken, verificarAdmin, async (req, res) => {
+    const client = await pool.connect();
+
+    const id_valoracion = req.body.id_valoracion;
+    const oculto = req.body.oculto;
+
+    try {
+        await client.query(`
+            UPDATE Valoraciones SET oculto = $1 WHERE id_valoracion = $2
+            `, [oculto, id_valoracion]
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Valoracion modificada correctamente'
+        });
+
+    } catch(error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error al interactuar con las valoraciones de la aplicación'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.post('/api/admin/usuarios/crear', verificarToken, verificarAdmin, async (req, res) => {
+    const userData = req.body;
+    
+    const encryptedPasswd = await bcrypt.hash(userData.password, 10);
+
+    console.log('Nuevo registro en la aplicación:');
+    console.log(userData);
+
+    if(userData.rol === 'inquilino') {
+        userData.rol = 'Inquilino';
+    } else if(userData.rol === 'casero') {
+        userData.rol = 'Casero';
+    } else if(userData.rol === 'administrador') {
+        userData.rol = 'Administrador';
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const resultado = await client.query(`
+            INSERT INTO Usuarios (username, email, nombre, apellidos, rol, passwd, f_nac, sexo)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+            RETURNING id_usuario;
+        `, [
+            userData.username, 
+            userData.email, 
+            userData.name,
+            userData.apellidos, 
+            userData.rol, 
+            encryptedPasswd, 
+            userData.birth_date, 
+            userData.gender
+        ]);
+
+        const id_usuario = resultado.rows[0].id_usuario;
+             
+        // Inserción en inquilino o casero según rol (a no ser que sea admin)
+        if(userData.rol === 'Inquilino') {
+            await client.query(`
+                INSERT INTO Inquilino (id_inquilino) 
+                VALUES ($1);
+            `, [id_usuario]);
+        }
+        
+        if(userData.rol === 'Casero') {
+            await client.query(`
+                INSERT INTO Caseros (id_casero) 
+                VALUES ($1);
+            `, [id_usuario]);
+        }
+
+        await client.query('COMMIT');
+        
+        res.status(200).json({
+            success: true,
+            message: 'Usuario guardado correctamente en la base de datos',
+            id_usuario: id_usuario
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error durante la inserción:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al registrar el usuario',
+        });
+    } finally {
+        client.release();
+    }
+});
 
 // Arranque del servidor
 app.listen(PORT, '0.0.0.0', () => {

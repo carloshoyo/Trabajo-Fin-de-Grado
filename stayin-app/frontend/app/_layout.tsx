@@ -78,6 +78,14 @@ export default function RootLayout() {
                 animationDuration: 100
               }}
             />
+            <Stack.Screen
+              name="searchScreen"
+              options={{
+                headerShown: false,
+                animation: 'fade',
+                animationDuration: 100
+              }}
+            />
           </Stack>
         </PostAdProvider>
       </LoginProvider>

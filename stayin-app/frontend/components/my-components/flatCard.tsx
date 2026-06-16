@@ -1,4 +1,5 @@
-import { View, Image, StyleSheet, ImageSourcePropType, Text, useColorScheme, Pressable } from "react-native";
+import { View, StyleSheet, ImageSourcePropType, Text, useColorScheme, Pressable } from "react-native";
+import { Image } from 'expo-image';
 import { Colors } from "@/constants/theme";
 import { router } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
@@ -78,7 +79,7 @@ export function FlatCard({title, img, direccion, precio, descripcion, area, max_
             <Image
                 style={[styles.img]}
                 source={require('../../assets/images/flat_img.png')}
-                resizeMode="cover"
+                contentFit="cover"
             />
             <View style={[styles.flatInfo]}>
                 <Text style={[styles.title, {

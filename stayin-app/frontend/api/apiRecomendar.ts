@@ -20,6 +20,14 @@ export interface Companero {
     score_afinidad: number;
 }
 
+export interface BusquedaVolatilPayload {
+    id_inquilino: number;
+    presupuesto_max: number;
+    zona: string[];
+    ciudad: string;
+    preferencias: any; 
+}
+
 export const obtenerRecomendacionesAnuncios = async (idInquilino: number): Promise<ViviendaRecomenda[]> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -111,3 +119,66 @@ export const registrarInteraccion = async(interaccion: Interaccion) => {
         throw error
     }
 }
+
+export const buscarAnunciosVolatil = async (payload: BusquedaVolatilPayload): Promise<ViviendaRecomenda[]> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); 
+
+    try {
+        const respuesta = await fetch(`${API_URL}/recomendar/anuncios/volatil`, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!respuesta.ok) {
+            console.warn('No se han recibido resultados de la búsqueda volátil');
+            throw respuesta.statusText;
+        }
+
+        const resultado = await respuesta.json();
+        return resultado;
+
+    } catch(error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError' || error === 'AbortError') {
+            console.warn('El motor de búsqueda tardó demasiado. Fallback activado.');
+        } else {
+            console.error('Error en búsqueda volátil: ', error);
+        }
+        throw error;
+    }
+};
+
+export const buscarCompanerosVolatil = async (payload: BusquedaVolatilPayload): Promise<Companero[]> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); 
+
+    try {
+        const respuesta = await fetch(`${API_URL}/recomendar/companeros/volatil`, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!respuesta.ok) throw respuesta.statusText;
+
+        return await respuesta.json();
+
+    } catch(error: any) {
+        clearTimeout(timeoutId);
+        throw error;
+    }
+};

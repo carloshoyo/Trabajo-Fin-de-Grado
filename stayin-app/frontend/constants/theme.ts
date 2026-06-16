@@ -43,6 +43,8 @@ export const Colors = {
     midScoringColorText: 'rgb(145, 111, 25)',
     lowScoringColorContainer: 'rgb(147, 46, 46)',
     lowScoringColorText: 'rgb(255, 0, 0)',
+    minimumTrackTintColor: '#1D9E75',
+    maximumTrackTintColor: '#9FE1CB',
     imgSource: require('../assets/images/LogoFondoBlanco.png'),
     imgSource2: require('../assets/images/LogoFondoBlancoPequeño.png')
   },
@@ -80,6 +82,8 @@ export const Colors = {
     midScoringColorText: 'rgb(86, 71, 16)',
     lowScoringColorContainer: 'rgb(158, 21, 21)',
     lowScoringColorText: 'rgb(86, 16, 16)',
+    minimumTrackTintColor: '#1D9E75',
+    maximumTrackTintColor: '#9FE1CB',
     imgSource: require('../assets/images/LogoFondoNegro.png'),
     imgSource2: require('../assets/images/LogoFondoNegroPequeño.png')
   },

@@ -58,7 +58,6 @@ export function AdvertCard({title, img, direccion, precio, descripcion, area, ma
                         {/* 4 x <Ionicons name="body-outline" size={14} color={currentColors.formTextColor} /> */}
                     </Text>
                 </View>
-                
             </View>
         </Pressable>
     )

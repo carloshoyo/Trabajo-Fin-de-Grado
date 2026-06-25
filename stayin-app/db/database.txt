@@ -16,7 +16,10 @@ create table public.usuarios
                    ((ARRAY ['Inquilino'::character varying, 'Casero'::character varying, 'Administrador'::character varying])::text[])),
     passwd     varchar(255)            not null,
     f_nac      date                    not null,
-    sexo       varchar(15)             not null,
+    sexo       varchar(15)             not null
+        constraint sexo_check
+            check ((sexo)::text = ANY
+                   ((ARRAY ['Hombre'::character varying, 'Mujer'::character varying, 'Indefinido'::character varying])::text[])),
     verificado boolean   default false not null,
     numero_tlf varchar(9)
         unique,
@@ -41,7 +44,8 @@ create table public.inquilino
         constraint inquilino_estado_check
             check ((estado)::text = ANY
                    ((ARRAY ['Vivienda'::character varying, 'Compañero'::character varying, 'Privado'::character varying])::text[])),
-    vector_realidad jsonb       default '{}'::jsonb
+    vector_realidad jsonb       default '{}'::jsonb,
+    vector_test     jsonb       default '{}'::jsonb                  not null
 );
 
 alter table public.inquilino
@@ -71,7 +75,8 @@ create table public.viviendas
     max_inquilinos integer                                       not null,
     cpostal        varchar(5) default '00000'::character varying not null,
     numero         integer    default 1                          not null,
-    puerta         varchar(4) default 1
+    puerta         varchar(4) default 1,
+    ciudad         varchar(50)                                   not null
 );
 
 alter table public.viviendas
@@ -155,7 +160,8 @@ create table public.valoraciones
     tipo_valoracion varchar(20) default 'usuario'::character varying
         constraint valoraciones_tipo_valoracion_check
             check ((tipo_valoracion)::text = ANY
-                   ((ARRAY ['usuario'::character varying, 'inmueble'::character varying])::text[]))
+                   ((ARRAY ['usuario'::character varying, 'inmueble'::character varying])::text[])),
+    oculto          boolean     default false
 );
 
 alter table public.valoraciones
@@ -228,5 +234,24 @@ create table public.interacciones_anuncios
 );
 
 alter table public.interacciones_anuncios
+    owner to postgres;
+
+create table public.interacciones_companeros
+(
+    id_interaccion   serial
+        primary key,
+    id_valorador     integer
+        references public.usuarios
+            on delete cascade,
+    id_valorado      integer
+        references public.usuarios
+            on delete cascade,
+    tipo_interaccion varchar(50),
+    peso_interaccion integer,
+    constraint interacciones_companeros_id_valorador_id_valorado_tipo_inte_key
+        unique (id_valorador, id_valorado, tipo_interaccion)
+);
+
+alter table public.interacciones_companeros
     owner to postgres;
 

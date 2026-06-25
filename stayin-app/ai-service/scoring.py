@@ -138,6 +138,9 @@ class MotorRecomendacion:
         
         score_nlp = ((similitud) / umbral) * 100.0
         # score_nlp = ((similitud + 1.0) / 2.0) * 100.0
+
+        if(score_nlp >= 100):
+            return 100.0
         
         return round(score_nlp, 2)
     
@@ -318,6 +321,9 @@ if __name__ == "__main__":
     # Descripciones usuario y anuncio
     texto_usuario = "Soy un estudiante tranquilo, me gusta el silencio y estudiar en casa. Odio el ruido."
     texto_anuncio = "Buscamos a alguien calmado, el piso es un templo de estudio. No se admiten fiestas."
+
+    descripcion_prueba1 = "Estudiante de máster, tranquila pero me gusta convivir. Busco un piso donde se respete el estudio entre semana y se puedan compartir cenas los fines de semana. Soy ordenada y cuido los espacios comunes."
+    descripcion_prueba2 = "Trabajo por las mañanas y madrugo, así que llevo un ritmo tranquilo. Me gusta tener la casa recogida y un ambiente relajado. Disfruto cocinando y charlando un rato, aunque también valoro mi espacio."
 
     # Ejemplo preferencias usuario
     mock_usuario = {
@@ -516,10 +522,10 @@ if __name__ == "__main__":
     }
 
     # 3. Instanciamos el motor y disparamos la evaluación
-    # motor = MotorRecomendacion(penalizacion_unidades=25)
-    # nota_final = motor.calcular_score_vivienda(mock_usuario, mock_piso, texto_usuario, texto_anuncio)
+    motor = MotorRecomendacion(penalizacion_unidades=25)
+    nota_final = motor.calcular_score_vivienda(mock_usuario, mock_piso, descripcion_prueba1, descripcion_prueba2)
 
-    motor = MotorCompaneros()
-    nota_final = motor.scoring_usuarios(mock_pref_usuario2, mock_real_usuario2, mock_pref_companero1, mock_real_companero1)
+    # motor = MotorCompaneros()
+    # nota_final = motor.scoring_usuarios(mock_pref_usuario2, mock_real_usuario2, mock_pref_companero1, mock_real_companero1)
     
     print(f"✅ Resultado de la evaluación cruzada: {nota_final}% de afinidad.")

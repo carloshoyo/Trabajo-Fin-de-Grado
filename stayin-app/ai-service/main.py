@@ -7,13 +7,30 @@ from contextlib import asynccontextmanager
 import engine
 import json
 
+def verificar_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    if not SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Falta configurar SECRET_KEY en el motor")
+        
+    try:
+        # Decodificamos usando el mismo algoritmo por defecto de Node.js (HS256)
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload # Devuelve el id_usuario y rol decodificados
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=403, detail="Token inválido o caducado.")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=403, detail="Acceso denegado. Token malformado.")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await database.connect_db()
     yield
     await database.close_db()
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    dependencies=[Depends(verificar_token)] # <--- El escudo protector
+)
 
 @app.post("/recomendar/anuncios")
 async def recomendar(request: RecommendationRequest):

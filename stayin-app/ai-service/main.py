@@ -1,11 +1,15 @@
-from fastapi import FastAPI, HTTPException
-from schemas import RecommendationRequest
-from schemas import Interaction
-from schemas import BusquedaVolatilRequest
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from schemas import RecommendationRequest, Interaction, BusquedaVolatilRequest
 import database
 from contextlib import asynccontextmanager
 import engine
 import json
+import jwt
+import os
+
+security = HTTPBearer()
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 def verificar_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials

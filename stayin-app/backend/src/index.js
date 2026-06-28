@@ -4,6 +4,10 @@ import bcrypt from 'bcrypt';
 import pool from './db.js';
 import jwt from 'jsonwebtoken';
 import 'dotenv/config';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 const secret_key = process.env.SECRET_KEY
 
@@ -12,6 +16,25 @@ const PORT = 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// --- Subida y servido de imágenes de anuncios ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, '..', 'uploads'); // backend/uploads
+fs.mkdirSync(uploadsDir, { recursive: true });
+
+// Servimos las imágenes subidas de forma estática en /uploads
+app.use('/uploads', express.static(uploadsDir));
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadsDir),
+    filename: (req, file, cb) => {
+        const unico = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        const ext = path.extname(file.originalname) || '.jpg';
+        cb(null, `foto-${unico}${ext}`);
+    }
+});
+const upload = multer({ storage });
 
 const verificarToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -245,19 +268,19 @@ app.post('/api/postad', verificarToken, async(req, res) => {
         const userResult = await client.query(`SELECT id_usuario FROM Usuarios WHERE username=$1`, [adData.userName]);
         const id_casero = userResult.rows[0].id_usuario;
 
-        const viviendaResult = await client.query(`INSERT INTO Viviendas(id_casero, area, direccion,  max_inquilinos, 
-                            numero, puerta, cpostal) VALUES($1, $2, $3, $4, $5, $6, $7)
+        const viviendaResult = await client.query(`INSERT INTO Viviendas(id_casero, area, direccion,  max_inquilinos,
+                            numero, puerta, cpostal, ciudad) VALUES($1, $2, $3, $4, $5, $6, $7, $8)
                             RETURNING id_vivienda;`, [
                                 id_casero,adData.area, adData.direccion, adData.max_inquilinos,
-                                adData.numero, adData.puerta, adData.cp
+                                adData.numero, adData.puerta, adData.cp, adData.ciudad
                             ]);
 
         const id_vivienda = viviendaResult.rows[0].id_vivienda;
 
         await client.query(`INSERT INTO Anuncios(id_vivienda, id_casero, titulo, img,
-                            descripcion, precio, multimedia) VALUES($1, $2, $3, $4, $5, $6, $7)`, [
+                            descripcion, precio, multimedia, caracteristicas) VALUES($1, $2, $3, $4, $5, $6, $7, $8)`, [
                                 id_vivienda, id_casero, adData.title, adData.portada, adData.descripcion,
-                                adData.precio, adData.multimedia
+                                adData.precio, adData.multimedia, adData.caracteristicas ?? {}
                             ]);
 
         await client.query(`COMMIT`);
@@ -290,16 +313,16 @@ app.post('/api/editad', verificarToken, async(req, res) => {
         await client.query('BEGIN;');
 
         const updateAnuncio = await client.query(`
-            UPDATE Anuncios SET titulo = $1, precio = $2
-            WHERE id_anuncio= $3 RETURNING id_vivienda;
-            `, [adData.title, adData.precio, adData.id_anuncio]);
+            UPDATE Anuncios SET titulo = $1, precio = $2, descripcion = $3
+            WHERE id_anuncio= $4 RETURNING id_vivienda;
+            `, [adData.title, adData.precio, adData.descripcion, adData.id_anuncio]);
 
         const id_vivienda = updateAnuncio.rows[0].id_vivienda;
 
         await client.query(`
-            UPDATE Viviendas SET area = $1, direccion = $2, max_inquilinos = $3,
-            descripcion = $4 WHERE id_vivienda = $5
-            `, [adData.area, adData.direccion, adData.max_inquilinos, adData.descripcion, id_vivienda
+            UPDATE Viviendas SET area = $1, direccion = $2, max_inquilinos = $3
+            WHERE id_vivienda = $4
+            `, [adData.area, adData.direccion, adData.max_inquilinos, id_vivienda
             ]);
         
             await client.query('COMMIT;');
@@ -746,6 +769,17 @@ app.post('/api/valoraciones/test/guardar', verificarToken, async (req, res) => {
     }
 });
 
+app.post('/api/upload', verificarToken, upload.array('fotos', 20), (req, res) => {
+    try {
+        // Guardamos rutas RELATIVAS; el cliente las resuelve con su base (independiente de la IP/host)
+        const urls = (req.files || []).map(f => `/uploads/${f.filename}`);
+        res.status(200).json({ success: true, urls });
+    } catch (error) {
+        console.error('Error al subir imágenes:', error);
+        res.status(500).json({ success: false, message: 'Error al subir las imágenes' });
+    }
+});
+
 app.post('/api/perfil/inquilino', verificarToken, async (req, res) => {
     const id_inquilino = req.user.id_usuario;
 
@@ -809,7 +843,7 @@ app.post('/api/edit/profile', verificarToken, async (req, res) => {
             WHERE id_inquilino = $5;
         `, [descripcion, fuma, mascota, estudiante, id_inquilino]);
 
-        // Preferencias de búsqueda (upsert: puede no existir la fila si el usuario no hizo el test)
+        // Preferencias de búsqueda
         await client.query(`
             INSERT INTO Preferencias_Inquilinos (id_inquilino, presupuesto_max, zona, mascota, ciudad, preferencias)
             VALUES ($1, $2, $3, $4, $5, $6)

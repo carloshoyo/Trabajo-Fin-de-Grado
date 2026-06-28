@@ -25,6 +25,7 @@ interface Anuncio {
     id_anuncio: number;
     score_afinidad?: number;
     es_favorito: boolean;
+    multimedia?: any;
 }
 
 export default function HomeInquilino() {
@@ -149,7 +150,7 @@ export default function HomeInquilino() {
                     renderItem={( { item }) => (
                         <FlatCard 
                             title={item.titulo}
-                            img={require('../assets/images/flat_img.png')}
+                            img={item.img}
                             direccion={item.direccion}
                             precio={item.precio}
                             descripcion={item.descripcion}
@@ -157,6 +158,7 @@ export default function HomeInquilino() {
                             max_inquilinos={item.max_inquilinos}
                             id_anuncio={item.id_anuncio}
                             es_favorito={item.es_favorito}
+                            multimedia={item.multimedia}
                         />
                     )}
                 // style={[styles.scrollArea]}
@@ -248,16 +250,6 @@ export default function HomeInquilino() {
                                 </Text>
                                 <SimpleLineIcons name="arrow-right" size={12} color={currentColors.flatCardBorderColor} />
                             </View>
-                        </Pressable>
-                        <Pressable 
-                            style={[styles.logout, {
-                                backgroundColor: currentColors.postAdContainerColor
-                            }]}
-                            onPress={logout}
-                        >
-                            <Text style={{color: currentColors.formTextColor}}>
-                                Log Out
-                            </Text>
                         </Pressable>
                     </View>
                 }

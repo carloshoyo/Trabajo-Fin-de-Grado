@@ -20,6 +20,7 @@ interface Anuncio {
     area: number;
     max_inquilinos: number;
     id_anuncio: number;
+    multimedia?: any;
 }
 
 export default function HomeCasero({userName}: {userName: string}) {
@@ -113,19 +114,10 @@ export default function HomeCasero({userName}: {userName: string}) {
                         area={anuncio.area}
                         max_inquilinos={anuncio.max_inquilinos}
                         id_anuncio={anuncio.id_anuncio}
+                        multimedia={anuncio.multimedia}
                     />
                 ))}
                 <PostAdComponent/>
-                <Pressable 
-                    style={[styles.logout, {
-                        backgroundColor: currentColors.postAdContainerColor
-                    }]}
-                    onPress={logout}
-                >
-                    <Text style={{color: currentColors.formTextColor}}>
-                        Log Out
-                    </Text>
-                </Pressable>
             </ScrollView>
             <NavBar 
                 active='home' 

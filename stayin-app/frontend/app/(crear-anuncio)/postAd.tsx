@@ -8,6 +8,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useAd } from "@/context/PostAdContext";
 import { useLogin } from "@/context/LoginContext";
+import { BuscadorZonas } from "@/components/my-components/buscadorZonas";
 
 export default function PostAd() {
     const theme = useColorScheme() ?? 'light';
@@ -23,39 +24,34 @@ export default function PostAd() {
     const [precio, setPrecio] = useState('');
     const [area, setArea] = useState('');
     const [inquilinos, setInquilinos] = useState('');
+    const [ciudad, setCiudad] = useState('');
     const {updateData} = useAd();
+    const onZonaSeleccionada = (codigosPostales: string[], ciudadSel: string | null) => {
+        setCiudad(ciudadSel ?? '');
+        // Si Google devuelve el código postal y el campo está vacío, lo prerellenamos
+        if (codigosPostales.length > 0 && cp === '') {
+            setCp(codigosPostales[0]);
+        }
+    };
     const handleContinuar = () => {
-        if(title != '' && direccion != '' && descripcion != '' && cp != '' && numero != '') {
-            if(puerta === '') {
-                updateData({
-                    title: title, 
-                    direccion: direccion, 
-                    descripcion: descripcion, 
-                    cp: cp, 
-                    numero: numero, 
-                    userName: loginData.userName, 
-                    portada: media[0], 
-                    precio: Number(precio), 
-                    area: Number(area), 
-                    max_inquilinos: Number(inquilinos)
-                });
-            } else {
-                updateData({
-                    title: title, 
-                    direccion: direccion, 
-                    descripcion: descripcion,
-                    cp: cp, numero: numero, 
-                    puerta: puerta, 
-                    userName: loginData.userName, 
-                    portada: media[0], 
-                    precio: Number(precio), 
-                    area: Number(area), 
-                    max_inquilinos: Number(inquilinos)
-                });
-            }
+        if(title != '' && direccion != '' && descripcion != '' && cp != '' && numero != '' && ciudad != '') {
+            updateData({
+                title: title,
+                direccion: direccion,
+                descripcion: descripcion,
+                cp: cp,
+                ciudad: ciudad,
+                numero: numero,
+                puerta: puerta === '' ? undefined : puerta,
+                userName: loginData.userName,
+                portada: media[0],
+                precio: Number(precio),
+                area: Number(area),
+                max_inquilinos: Number(inquilinos)
+            });
             router.push('/postAdImages');
         } else {
-            console.log('Faltan datos del anuncio por introducir!!!');
+            console.log('Faltan datos del anuncio por introducir!!! (¿ciudad seleccionada?)');
         }
     }
     const seleccionarMultimedia = async () => {
@@ -116,6 +112,12 @@ export default function PostAd() {
                     onChangeText={setDireccion}
                 >
                 </TextInput>
+                <View style={{ width: '100%' }}>
+                    <Text style={{ color: currentColors.postAdInputTextColor, marginBottom: 6 }}>
+                        Ciudad{ciudad ? `: ${ciudad}` : ' (selecciona en el buscador)'}
+                    </Text>
+                    <BuscadorZonas onZonaSeleccionada={onZonaSeleccionada} />
+                </View>
                 <View style={[styles.infoContainer]}>
                     <TextInput
                         placeholder="Nº"

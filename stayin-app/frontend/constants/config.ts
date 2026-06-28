@@ -17,6 +17,7 @@ export const API_CONFIG = {
         guardarRespuestasTest: '/api/valoraciones/test/guardar',
         getPerfilInquilino: '/api/perfil/inquilino',
         editProfile: '/api/edit/profile',
+        uploadImages: '/api/upload',
     },
     motorUrl: process.env.EXPO_PUBLIC_MOTOR_URL,
 };

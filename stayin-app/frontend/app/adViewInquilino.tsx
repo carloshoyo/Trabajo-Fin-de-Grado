@@ -9,6 +9,7 @@ import { API_CONFIG } from "@/constants/config";
 import * as SecureStore from 'expo-secure-store';
 import { useLogin } from "@/context/LoginContext";
 import { MapaPrueba } from "@/components/my-components/MapaPrueba";
+import { CarruselImagenes, aplanarMultimedia } from "@/components/my-components/carruselImagenes";
 
 export default function AdViewInquilino() {
     const theme = useColorScheme() ?? 'light';
@@ -21,6 +22,13 @@ export default function AdViewInquilino() {
     const { area } = useLocalSearchParams<{area: string}>();
     const { max_inquilinos } = useLocalSearchParams<{max_inquilinos: string}>();
     const { id_anuncio } = useLocalSearchParams<{id_anuncio: string}>();
+    const { multimedia } = useLocalSearchParams<{multimedia: string}>();
+    let imagenes: string[] = [];
+    try {
+        imagenes = aplanarMultimedia(multimedia ? JSON.parse(multimedia) : null);
+    } catch {
+        imagenes = [];
+    }
     const [editedTitle , setEditedTitle] = useState(title);
     const [editedDireccion , setEditedDireccion] = useState(direccion);
     const [editedPrecio , setEditedPrecio] = useState(precio);
@@ -120,10 +128,7 @@ export default function AdViewInquilino() {
                 </View>
                 
                 <View>
-                    <Image
-                        style={[styles.imgs]}
-                        source={require('../assets/images/flat_img.png')}
-                    />
+                    <CarruselImagenes imagenes={imagenes} />
                     <View style={[styles.containerInfo]}>
                         <Text style={[styles.title, {
                             color: currentColors.formTextColor

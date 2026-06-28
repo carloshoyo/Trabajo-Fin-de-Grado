@@ -6,11 +6,13 @@ interface PostAd {
     numero?: string;
     puerta?: string;
     cp?: string;
+    ciudad?: string;
     descripcion?: string;
     portada?: string;
     precio?: number;
     area?: number;
     max_inquilinos?: number;
+    caracteristicas?: any;
     multimedia?: {
         salon: string[];
         cocina: string[];

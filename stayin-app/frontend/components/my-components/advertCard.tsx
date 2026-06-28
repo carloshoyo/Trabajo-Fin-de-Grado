@@ -1,16 +1,20 @@
-import { View, Image, StyleSheet, ImageSourcePropType, Text, useColorScheme, Pressable } from "react-native";
+import { View, StyleSheet, ImageSourcePropType, Text, useColorScheme, Pressable } from "react-native";
+import { Image } from "expo-image";
 import { Colors } from "@/constants/theme";
 import { router } from "expo-router";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { resolverUri } from "@/components/my-components/carruselImagenes";
 
-export function AdvertCard({title, img, direccion, precio, descripcion, area, max_inquilinos, id_anuncio}: {title: string, img: string, direccion: string, precio: number, descripcion: string, area: number, max_inquilinos: number, id_anuncio: number}) {
+const PLACEHOLDER = require('../../assets/images/flat_img.png');
+
+export function AdvertCard({title, img, direccion, precio, descripcion, area, max_inquilinos, id_anuncio, multimedia}: {title: string, img: string, direccion: string, precio: number, descripcion: string, area: number, max_inquilinos: number, id_anuncio: number, multimedia?: any}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const handleContinuar = () => {
         router.push({
             pathname: '/AdView',
-            params: {title: title, img: img, direccion: direccion, precio: precio, descripcion: descripcion, area: area, max_inquilinos: max_inquilinos, id_anuncio: id_anuncio}
+            params: {title: title, img: img, direccion: direccion, precio: precio, descripcion: descripcion, area: area, max_inquilinos: max_inquilinos, id_anuncio: id_anuncio, multimedia: JSON.stringify(multimedia ?? {})}
 
         });
     }
@@ -25,8 +29,8 @@ export function AdvertCard({title, img, direccion, precio, descripcion, area, ma
         >
             <Image
                 style={[styles.img]}
-                source={require('../../assets/images/flat_img.png')}
-                resizeMode="cover"
+                source={typeof img === 'string' && img ? { uri: resolverUri(img) } : PLACEHOLDER}
+                contentFit="cover"
             />
             <View style={[styles.flatInfo]}>
                 <Text style={[styles.title, {

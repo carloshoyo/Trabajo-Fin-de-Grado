@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useAd } from "@/context/PostAdContext";
 import { API_CONFIG } from "@/constants/config";
 import * as SecureStore from 'expo-secure-store';
+import { CarruselImagenes, aplanarMultimedia } from "@/components/my-components/carruselImagenes";
 
 export default function AdView() {
     const theme = useColorScheme() ?? 'light';
@@ -18,6 +19,13 @@ export default function AdView() {
     const { area } = useLocalSearchParams<{area: string}>();
     const { max_inquilinos } = useLocalSearchParams<{max_inquilinos: string}>();
     const { id_anuncio } = useLocalSearchParams<{id_anuncio: string}>();
+    const { multimedia } = useLocalSearchParams<{multimedia: string}>();
+    let imagenes: string[] = [];
+    try {
+        imagenes = aplanarMultimedia(multimedia ? JSON.parse(multimedia) : null);
+    } catch {
+        imagenes = [];
+    }
     const [editedTitle , setEditedTitle] = useState(title);
     const [editedDireccion , setEditedDireccion] = useState(direccion);
     const [editedPrecio , setEditedPrecio] = useState(precio);
@@ -64,9 +72,8 @@ export default function AdView() {
                 }),
             });
             const resultado = await respuesta.json();
-            // console.log('CÓDIGO HTML RECIBIDO: ', resultado);
             console.log('Respuesta: ', resultado);
-            return true;
+            return resultado.success === true;
         } catch (error) {
             console.error('Error: ', error);
             return false;
@@ -108,10 +115,7 @@ export default function AdView() {
                 </View>
                 
                 <View>
-                    <Image
-                        style={[styles.imgs]}
-                        source={require('../assets/images/flat_img.png')}
-                    />
+                    <CarruselImagenes imagenes={imagenes} />
                     <View style={[styles.containerInfo]}>
                         {isEditable ? (
                             <>

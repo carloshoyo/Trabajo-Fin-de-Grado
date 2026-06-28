@@ -8,15 +8,18 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as SecureStore from 'expo-secure-store';
 import { API_CONFIG } from "@/constants/config";
 import { useState } from "react";
+import { resolverUri } from "@/components/my-components/carruselImagenes";
 
-export function FlatCard({title, img, direccion, precio, descripcion, area, max_inquilinos, id_anuncio, es_favorito}: {title: string, img: string, direccion: string, precio: number, descripcion: string, area: number, max_inquilinos: number, id_anuncio: number, es_favorito?: boolean}) {
+const PLACEHOLDER = require('../../assets/images/flat_img.png');
+
+export function FlatCard({title, img, direccion, precio, descripcion, area, max_inquilinos, id_anuncio, es_favorito, multimedia}: {title: string, img: string, direccion: string, precio: number, descripcion: string, area: number, max_inquilinos: number, id_anuncio: number, es_favorito?: boolean, multimedia?: any}) {
     const theme = useColorScheme() ?? 'light';
     const currentColors = Colors[theme];
     const [isFavourite, setIsFavourite] = useState(es_favorito || false);
     const handleContinuar = () => {
         router.push({
             pathname: '/adViewInquilino',
-            params: {title: title, img: img, direccion: direccion, precio: precio, descripcion: descripcion, area: area, max_inquilinos: max_inquilinos, id_anuncio: id_anuncio}
+            params: {title: title, img: img, direccion: direccion, precio: precio, descripcion: descripcion, area: area, max_inquilinos: max_inquilinos, id_anuncio: id_anuncio, multimedia: JSON.stringify(multimedia ?? {})}
 
         });
     }
@@ -78,7 +81,7 @@ export function FlatCard({title, img, direccion, precio, descripcion, area, max_
         >
             <Image
                 style={[styles.img]}
-                source={require('../../assets/images/flat_img.png')}
+                source={typeof img === 'string' && img ? { uri: resolverUri(img) } : PLACEHOLDER}
                 contentFit="cover"
             />
             <View style={[styles.flatInfo]}>

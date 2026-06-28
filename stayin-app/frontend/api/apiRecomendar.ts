@@ -1,3 +1,5 @@
+import * as SecureStore from 'expo-secure-store';
+
 const API_URL = process.env.EXPO_PUBLIC_MOTOR_URL
 
 interface Interaccion {
@@ -30,13 +32,15 @@ export interface BusquedaVolatilPayload {
 
 export const obtenerRecomendacionesAnuncios = async (idInquilino: number): Promise<ViviendaRecomenda[]> => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const token = await SecureStore.getItemAsync('userToken');
     try {
         const respuesta = await fetch(`${API_URL}/recomendar/anuncios`, {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({
                 id_inquilino: idInquilino
@@ -63,14 +67,16 @@ export const obtenerRecomendacionesAnuncios = async (idInquilino: number): Promi
 
 export const obtenerRecomendacionesCompaneros = async(idInquilino: number): Promise<Companero[]> => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const token = await SecureStore.getItemAsync('userToken');
 
     try {
         const respuesta = await fetch(`${API_URL}/recomendar/companeros`, {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({
                 id_inquilino: idInquilino
@@ -97,12 +103,14 @@ export const obtenerRecomendacionesCompaneros = async(idInquilino: number): Prom
 }
 
 export const registrarInteraccion = async(interaccion: Interaccion) => {
+    const token = await SecureStore.getItemAsync('userToken');
     try {
         const respuesta = await fetch(`${API_URL}/interaccion`, {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({
                 id_inquilino: interaccion.id_inquilino,
@@ -122,7 +130,8 @@ export const registrarInteraccion = async(interaccion: Interaccion) => {
 
 export const buscarAnunciosVolatil = async (payload: BusquedaVolatilPayload): Promise<ViviendaRecomenda[]> => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); 
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const token = await SecureStore.getItemAsync('userToken');
 
     try {
         const respuesta = await fetch(`${API_URL}/recomendar/anuncios/volatil`, {
@@ -130,6 +139,7 @@ export const buscarAnunciosVolatil = async (payload: BusquedaVolatilPayload): Pr
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify(payload),
             signal: controller.signal
@@ -158,7 +168,8 @@ export const buscarAnunciosVolatil = async (payload: BusquedaVolatilPayload): Pr
 
 export const buscarCompanerosVolatil = async (payload: BusquedaVolatilPayload): Promise<Companero[]> => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); 
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const token = await SecureStore.getItemAsync('userToken');
 
     try {
         const respuesta = await fetch(`${API_URL}/recomendar/companeros/volatil`, {
@@ -166,6 +177,7 @@ export const buscarCompanerosVolatil = async (payload: BusquedaVolatilPayload): 
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify(payload),
             signal: controller.signal

@@ -27,20 +27,20 @@ export function UserCard({name, scoring, img}: {name: string, scoring: number, i
             <View style={[styles.textContainer]}>
                 
                 <View style={[styles.scoringContainer, {
-                    backgroundColor: scoring >= 80 
+                    backgroundColor: scoring >= 75 
                             ? currentColors.highScoringColorContainer
-                                : scoring < 80 && scoring >= 50 
+                                : scoring < 75 && scoring >= 50 
                                     ? currentColors.midScoringColorContainer
                                     : currentColors.lowScoringColorContainer
                 }]}>
                     <Text style={{
-                        color: scoring >= 80 
+                        color: scoring >= 75 
                             ? currentColors.highScoringColorText 
-                                : scoring < 80 && scoring >= 50 
+                                : scoring < 75 && scoring >= 50 
                                     ? currentColors.midScoringColorText
                                     : currentColors.lowScoringColorText
                     }}>
-                        {`${scoring}%`}
+                        {`${Math.round(scoring)}%`}
                     </Text>
                 </View>
                 <Text style={[styles.nameStyle, {

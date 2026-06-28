@@ -7,6 +7,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { Href, RelativePathString, useRouter } from "expo-router";
 import * as SecureStore from 'expo-secure-store';
 import { useLogin } from "@/context/LoginContext";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export function NavBar({active, solicitudes, valoraciones}: {active: string, solicitudes: number, valoraciones: number, home: Href}) {
     const theme = useColorScheme() ?? 'light';
@@ -70,8 +71,23 @@ export function NavBar({active, solicitudes, valoraciones}: {active: string, sol
                         <MaterialCommunityIcons name={active === 'social' ? "cards-heart" : "cards-heart-outline"} size={24} color={currentColors.formButtonColor}/>
                     </Pressable>
                 </View>
-                <Pressable style={[styles.pressables]}>
-                    <FontAwesome5 name="user-circle" size={24} color={currentColors.formButtonColor}/>
+                <Pressable 
+                    style={[styles.pressables]} 
+                    onPress={() => (router.replace({
+                        pathname: '/editProfile',
+                        params: {
+                            valoraciones: valoraciones,
+                            solicitudes: solicitudes
+                        }
+                    }
+                    ))}
+                >
+                    {active === 'profile' ? (
+                        <FontAwesome name="user-circle-o" size={24} color={currentColors.formButtonColor} />
+                    ) : (
+                        <FontAwesome5 name="user-circle" size={24} color={currentColors.formButtonColor}/>
+
+                    )}                    
                 </Pressable>
             </View>
         </View>

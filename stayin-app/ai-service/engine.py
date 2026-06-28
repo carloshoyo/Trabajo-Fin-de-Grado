@@ -14,6 +14,10 @@ def generar_ranking_viviendas(
 ) -> list:
     ranking_temporal = []
 
+    # Precalculamos el embedding de la descripción del usuario una sola vez:
+    # es idéntico para todas las viviendas, así evitamos recodificarlo en cada iteración.
+    emb_usuario = motor_global.codificar(descripcion_usuario)
+
     for v in viviendas_candidatas:
         vivienda = dict(v)
         id_vivienda = vivienda.get("id_vivienda")
@@ -44,7 +48,8 @@ def generar_ranking_viviendas(
                 pref_usuario=pref_usuario,
                 caracteristicas_piso=caracteristicas_json,
                 descripcion_usuario=descripcion_usuario,
-                descripcion_anuncio=descripcion_texto
+                descripcion_anuncio=descripcion_texto,
+                emb_usuario=emb_usuario
             )
 
             score_final = min(score_base + feedback, 100)
@@ -95,7 +100,7 @@ async def get_companeros_validos(id_usuario, zona, ciudad, pool):
     ciudad_limpia = ciudad.split(',')[0].strip() if ciudad else ""
 
     query = """
-        SELECT i.vector_realidad, p.zona, p.perfil_social, p.preferencias, u.sexo, u.username, u.nombre, i.descripcion,
+        SELECT i.id_inquilino, i.vector_realidad, p.zona, p.perfil_social, p.preferencias, u.sexo, u.username, u.nombre, i.descripcion,
                COALESCE(SUM(int_c.peso_interaccion), 0) AS feedback_score
         FROM Inquilino i
         JOIN Preferencias_Inquilinos p ON p.id_inquilino = i.id_inquilino
@@ -118,6 +123,10 @@ async def get_companeros_validos(id_usuario, zona, ciudad, pool):
 
 def get_ranking_companeros(pref_a_generales: dict, perfil_social_a: dict, real_a: dict, sexo_a: str, descripcion_usuario: str, candidatos: list, top_n: int = 20) -> list:
     ranking_temporal = []
+
+    # Precalculamos el embedding de la descripción del usuario una sola vez
+    # y lo reutilizamos al comparar con cada candidato.
+    emb_usuario = motor_global.codificar(descripcion_usuario)
 
     for c in candidatos:
         candidato = dict(c)
@@ -143,17 +152,17 @@ def get_ranking_companeros(pref_a_generales: dict, perfil_social_a: dict, real_a
             continue
 
         genero_req_b = pref_b.get("convivencia_normas", {}).get("genero_inquilinos", "indiferente").lower()
-        if (genero_req_b != "indiferente" and genero_req_b != "indefinido") and genero_req_b != sexo_a:
+        if (genero_req_b != "indiferente" and genero_req_b != "indefinido") and genero_req_b != sexo_a.lower():
             continue
 
-        ocupacion_req_a = pref_a_generales.get("convivencia_normas", {}).get("ocupacion_inquilinos", "indiferente").lower()
-        ocupacion_real_b = candidato.get("ocupacion", "").lower()
-        if ocupacion_req_a != "indiferente" and ocupacion_req_a != ocupacion_real_b:
-            continue 
+        # NOTA: no se filtra por ocupación porque no existe un campo con la ocupación
+        # real del candidato (ni columna en BD ni dato en perfil_social). Filtrar aquí
+        # comparaba la preferencia contra un valor siempre vacío y descartaba a todos
+        # los candidatos. Reintroducir el filtro cuando se almacene la ocupación real.
 
         try:
             # Obtenemos el Score NLP aprovechando el modelo que ya está en RAM
-            score_nlp = motor_global.evaluar_semantica(descripcion_usuario, desc_b)
+            score_nlp = motor_global.evaluar_semantica(descripcion_usuario, desc_b, emb_usuario)
 
             # Score Base (Matemático + NLP)
             score_base = motor_social.scoring_usuarios(perfil_social_a, real_a, perfil_social_b, real_b, score_nlp)

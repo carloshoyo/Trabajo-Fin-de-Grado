@@ -73,14 +73,11 @@ app.post('/api/register', async (req, res) => {
         userData.rol = 'Casero';
     }
 
-    // 2. Pedimos un trabajador a la base de datos
     const client = await pool.connect();
 
     try {
-        // 3. Abrimos la transacción
         await client.query('BEGIN');
 
-        // 4. Inserción principal
         const resultado = await client.query(`
             INSERT INTO Usuarios (username, email, nombre, apellidos, rol, passwd, f_nac, sexo)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
@@ -99,7 +96,6 @@ app.post('/api/register', async (req, res) => {
         // Atrapamos el ID generado
         const id_usuario = resultado.rows[0].id_usuario;
              
-        // 5. Bifurcación: Inserciones secundarias
         if(userData.rol === 'Inquilino') {
             await client.query(`
                 INSERT INTO Inquilino (id_inquilino) 
@@ -114,7 +110,6 @@ app.post('/api/register', async (req, res) => {
             `, [id_usuario]);
         }
 
-        // 6. ¡Éxito! Guardamos los cambios definitivamente
         await client.query('COMMIT');
         
         res.status(200).json({
@@ -130,7 +125,6 @@ app.post('/api/register', async (req, res) => {
             message: 'Error al registrar el usuario'
         });
     } finally {
-        // 7. Devolvemos el trabajador al Pool
         client.release();
     }
 });
@@ -746,6 +740,98 @@ app.post('/api/valoraciones/test/guardar', verificarToken, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error interno al guardar el perfil'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.post('/api/perfil/inquilino', verificarToken, async (req, res) => {
+    const id_inquilino = req.user.id_usuario;
+
+    const client = await pool.connect();
+
+    try {
+        const resultado = await client.query(`
+            SELECT
+                u.nombre, u.apellidos,
+                i.descripcion, i.fuma, i.mascota, i.estudiante,
+                p.presupuesto_max, p.zona, p.ciudad, p.preferencias
+            FROM Usuarios u
+            JOIN Inquilino i ON i.id_inquilino = u.id_usuario
+            LEFT JOIN Preferencias_Inquilinos p ON p.id_inquilino = u.id_usuario
+            WHERE u.id_usuario = $1;
+        `, [id_inquilino]);
+
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Perfil no encontrado'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            perfil: resultado.rows[0]
+        });
+    } catch (error) {
+        console.error('Error al obtener el perfil del inquilino:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener el perfil'
+        });
+    } finally {
+        client.release();
+    }
+});
+
+app.post('/api/edit/profile', verificarToken, async (req, res) => {
+    const id_inquilino = req.user.id_usuario;
+    const {
+        nombre, apellidos, descripcion,
+        fuma, mascota, estudiante,
+        presupuesto_max, zona, ciudad, preferencias
+    } = req.body;
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // Datos personales
+        await client.query(`
+            UPDATE Usuarios SET nombre = $1, apellidos = $2 WHERE id_usuario = $3;
+        `, [nombre, apellidos, id_inquilino]);
+
+        // Datos de inquilino
+        await client.query(`
+            UPDATE Inquilino SET descripcion = $1, fuma = $2, mascota = $3, estudiante = $4
+            WHERE id_inquilino = $5;
+        `, [descripcion, fuma, mascota, estudiante, id_inquilino]);
+
+        // Preferencias de búsqueda (upsert: puede no existir la fila si el usuario no hizo el test)
+        await client.query(`
+            INSERT INTO Preferencias_Inquilinos (id_inquilino, presupuesto_max, zona, mascota, ciudad, preferencias)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (id_inquilino) DO UPDATE SET
+                presupuesto_max = EXCLUDED.presupuesto_max,
+                zona = EXCLUDED.zona,
+                ciudad = EXCLUDED.ciudad,
+                preferencias = EXCLUDED.preferencias;
+        `, [id_inquilino, presupuesto_max ?? 0, zona ?? [], mascota ?? false, ciudad ?? '', preferencias ?? {}]);
+
+        await client.query('COMMIT');
+
+        res.status(200).json({
+            success: true,
+            message: 'Perfil actualizado correctamente'
+        });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error al actualizar el perfil:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al actualizar el perfil'
         });
     } finally {
         client.release();

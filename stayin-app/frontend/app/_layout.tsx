@@ -86,6 +86,14 @@ export default function RootLayout() {
                 animationDuration: 100
               }}
             />
+            <Stack.Screen
+              name="editProfile"
+              options={{
+                headerShown: false,
+                animation: 'fade',
+                animationDuration: 100
+              }}
+            />
           </Stack>
         </PostAdProvider>
       </LoginProvider>

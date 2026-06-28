@@ -15,6 +15,8 @@ export const API_CONFIG = {
         registrarInteraccion: '/api/interaccion/new',
         eliminarFavoritos: '/api/interaccion/eliminarFavoritos',
         guardarRespuestasTest: '/api/valoraciones/test/guardar',
+        getPerfilInquilino: '/api/perfil/inquilino',
+        editProfile: '/api/edit/profile',
     },
     motorUrl: process.env.EXPO_PUBLIC_MOTOR_URL,
 };

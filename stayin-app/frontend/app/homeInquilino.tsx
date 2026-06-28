@@ -233,9 +233,9 @@ export default function HomeInquilino() {
                                         No hay compañeros compatibles con tu zona aún
                                     </Text>
                                 )}
-                                <UserCard name="Carlos Hoyo" scoring={89}></UserCard>
+                                {/* <UserCard name="Carlos Hoyo" scoring={89}></UserCard>
                                 <UserCard name="Carlos Hoyo" scoring={69}></UserCard>
-                                <UserCard name="Carlos Hoyo" scoring={49}></UserCard>
+                                <UserCard name="Carlos Hoyo" scoring={49}></UserCard> */}
                             </ScrollView>
                         )}                        
                         <Pressable style={[styles.verMasPressCompaneros]}>

@@ -117,12 +117,21 @@ class MotorRecomendacion:
         score = 100.0 - ((distancia / distancia_maxima) * 100.0)
         return score
     
-    def evaluar_semantica(self, descripcion_usuario: str, descripcion_anuncio: str) -> float:
+    def codificar(self, texto: str):
+        # Devuelve el embedding de un texto (o None si está vacío). Útil para precalcular
+        # una sola vez el vector de la descripción del usuario y reutilizarlo en bucle.
+        if not texto:
+            return None
+        return self.modelo_nlp.encode(texto, convert_to_tensor=True)
+
+    def evaluar_semantica(self, descripcion_usuario: str, descripcion_anuncio: str, emb_usuario=None) -> float:
         if not descripcion_usuario or not descripcion_anuncio:
             return 50.0
 
-        # Calculamos los tensores con encode y convert_to_tensor = True
-        vector_usuario = self.modelo_nlp.encode(descripcion_usuario, convert_to_tensor=True)
+        # Calculamos los tensores con encode y convert_to_tensor = True.
+        # Si el embedding del usuario ya viene precalculado, lo reutilizamos para no
+        # recodificar la misma descripción en cada iteración del ranking.
+        vector_usuario = emb_usuario if emb_usuario is not None else self.modelo_nlp.encode(descripcion_usuario, convert_to_tensor=True)
         vector_anuncio = self.modelo_nlp.encode(descripcion_anuncio, convert_to_tensor=True)
 
         # Umbral calibrado como 100%
@@ -144,10 +153,14 @@ class MotorRecomendacion:
         
         return round(score_nlp, 2)
     
-    def calcular_score_vivienda(self, pref_usuario: dict, caracteristicas_piso: dict, descripcion_usuario: str = "", descripcion_anuncio: str = "") -> float:
+    def calcular_score_vivienda(self, pref_usuario: dict, caracteristicas_piso: dict, descripcion_usuario: str = "", descripcion_anuncio: str = "", emb_usuario=None) -> float:
         # Acumuladores globales
         score_total_acumulado = 0.0
         peso_modulo_activo = 0.0
+        # Valor por defecto: si el usuario no tiene ningún módulo de preferencias válido,
+        # el score matemático es 0 y la vivienda se evalúa solo por la parte semántica (NLP),
+        # evitando un NameError que descartaría la vivienda.
+        score_matematico = 0.0
 
         # Peso de cada parte en la calificación final
         alfa = 0.8
@@ -194,7 +207,7 @@ class MotorRecomendacion:
         if peso_modulo_activo > 0.0:
             score_matematico = (score_total_acumulado / peso_modulo_activo) * 100.0
 
-        score_nlp = self.evaluar_semantica(descripcion_usuario, descripcion_anuncio)
+        score_nlp = self.evaluar_semantica(descripcion_usuario, descripcion_anuncio, emb_usuario)
 
         print("Score NLP: ", score_nlp)
         print("Score matemático: ", score_matematico)

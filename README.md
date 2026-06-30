@@ -2,10 +2,11 @@
 
 **A mobile platform for finding compatible flatmates and shared housing, built around a hybrid recommendation engine that scores mutual lifestyle compatibility — not just listings.**
 
-![React Native](https://img.shields.io/badge/React_Native-Expo-000020?logo=expo&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-API-339933?logo=node.js&logoColor=white)
+![React Native](https://img.shields.io/badge/React_Native-Frontend-000020?logo=react&logoColor=white)
+![Expo](https://img.shields.io/badge/Expo-Frontend-000020?logo=expo&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-Backend-339933?logo=node.js&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Recommender-009688?logo=fastapi&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?logo=postgresql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-DB-4169E1?logo=postgresql&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 
 > Final Degree Project (TFG) — Computer Engineering, ETSIIT, Universidad de Granada.

@@ -118,7 +118,7 @@ Completed as a Final Degree Project at ETSIIT (Universidad de Granada). The full
 ## Links
 
 - 🔗 **Portfolio:** https://www.carloshoyo.dev/
-- 📄 **Project report (TFG):** 
+- 📄 **Project report (TFG):** [Memoria TFG](Documents/MEMORIA_TFG_CARLOS_HOYO_LIDDLE.pdf)
 
 ---
 

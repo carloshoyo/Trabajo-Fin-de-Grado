@@ -1,0 +1,92 @@
+//// Docs: https://dbml.dbdiagram.io/docs
+//// -- LEVEL 1
+//// -- Schemas, Tables and References
+
+// Creating tables
+// You can define the tables with full schema names
+Table Usarios {
+  id_usuario int [not null, primary key, increment]
+  username varchar(20) [not null, unique]
+  email varchar (255) [not null, unique]
+  nombre varchar(50) [not null]
+  apellidos varchar(50) [not null]
+  rol varchar(9) [not null]
+  passwd varchar(50) [not null]
+  estado varchar(15) [not null]
+  f_nac date [not null]
+  sexo varchar(5) [not null]
+}
+
+Table Inquilinos {
+  id_inquilino int [not null, primary key, increment]
+  estudiante bool
+  fuma bool
+  mascota bool
+  descripción varchar(500)
+}
+
+Table Caseros {
+  id_casero int [not null, primary key, increment]
+}
+
+Table Viviendas {
+  id_vivienda int [not null, pk, increment]
+  id_casero int [not null, ref: > Caseros.id_casero]
+  area int [not null]
+  direccion varchar(50) [not null]
+  max_inquilinos int [not null]
+  descripcion varchar(500)
+}
+
+Table Anuncios {
+  id_anuncio int [not null, pk, increment]
+  f_publicacion date [not null]
+  id_usuario int [not null, ref: > Caseros.id_casero]
+  id_vivienda int [not null, ref: - Viviendas.id_vivienda]
+}
+
+Table Valoraciones_Entre_Inquilinos {
+  id_usuario1 int [not null, ref: > Inquilinos.id_inquilino]
+  id_usuario2 int [not null, ref: > Inquilinos.id_inquilino]
+  f_inicio_convivencia date [not null]
+  f_fin_convivencia date [not null]
+  comentario_general varchar(1000)
+  calidad_limpieza int [not null]
+  vajilla int [not null]
+  zonas_comunes int [not null]
+  pagos int [not null]
+  gastos int [not null]
+  consumo int [not null] 
+  horas_descanso int [not null]
+  visitas int [not null]
+  uso_espacio int [not null]
+  reaccion_conflictos int [not null]
+  empatía int [not null]
+  comunicación_problemas int [not null]
+  cuidado_vivienda int [not null]
+
+  indexes {
+    (id_usuario1, id_usuario2) [pk]
+  }
+}
+
+Table Valoraciones_Inquilino_Vivienda {
+  id_usuario int [not null, ref: > Inquilinos.id_inquilino]
+  id_vivienda int [not null, ref: > Viviendas.id_vivienda]
+
+  indexes {
+    (id_usuario, id_vivienda) [pk]
+  }
+}
+
+Table Valoraciones_Inquilino_Casero {
+  id_inquilino int [not null, ref: > Inquilinos.id_inquilino]
+  id_casero int [not null, ref: > Caseros.id_casero]
+
+  indexes {
+    (id_inquilino, id_casero) [pk]
+  }
+}
+
+Ref: Inquilinos.id_inquilino - Usarios.id_usuario
+Ref: Caseros.id_casero - Usarios.id_usuario

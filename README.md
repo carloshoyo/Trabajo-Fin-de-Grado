@@ -117,9 +117,8 @@ Completed as a Final Degree Project at ETSIIT (Universidad de Granada). The full
 
 ## Links
 
-- 🔗 **Portfolio:** coming soon
+- 🔗 **Portfolio:** https://www.carloshoyo.dev/
 - 📄 **Project report (TFG):** 
-- 📱 **Demo / screenshots:** 
 
 ---
 
@@ -128,5 +127,4 @@ Completed as a Final Degree Project at ETSIIT (Universidad de Granada). The full
 **Carlos** — Full-Stack / AI Engineer
 Computer Engineering, Universidad de Granada
 
-- LinkedIn — _add link_
-- GitHub — _add link_
+- LinkedIn — (https://www.linkedin.com/in/carlos-hoyo-liddle-ba09b6314/)
